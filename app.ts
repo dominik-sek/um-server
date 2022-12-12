@@ -94,5 +94,13 @@ app.get('/checkauth', async (req, res) => {
     }
 });
 
+app.delete('/logout', (req, res, next) => {
+    req.logout(function(err) {
+        if (err) {
+          return next(err);
+        }
+        res.status(200).send("OK");
+    });    
+})
 
 export default app;
