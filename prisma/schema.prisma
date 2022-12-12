@@ -61,6 +61,7 @@ model grade {
   teacher_id           Int
   date                 DateTime? @db.Date
   gradebook_student_id Int
+  grade                Int       @db.SmallInt
   gradebook            gradebook @relation(fields: [gradebook_student_id], references: [student_id], onDelete: NoAction, onUpdate: NoAction)
   subject              subject   @relation(fields: [subject_id, teacher_id], references: [id, teacher_id], onDelete: NoAction, onUpdate: NoAction)
 
