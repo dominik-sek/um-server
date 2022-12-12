@@ -24,6 +24,7 @@
     "prisma": "^4.6.1",
     "superagent": "^8.0.6",
     "supertest": "^6.3.3",
+    "supertest-session": "^4.1.0",
     "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",

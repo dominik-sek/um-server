@@ -12,7 +12,6 @@ declare global {
 }
 
 export const initialize = (passport: PassportStatic) => {
-  console.log('Initializing passport...')
   const authenticateUser = async (login:string, password:string, done: (error: any, user?: user | false, options?: { message: string }) => void) => {
 
     const user = await prisma.user.findFirst({
@@ -20,7 +19,6 @@ export const initialize = (passport: PassportStatic) => {
         login: login
       },
     });
-    console.log(user)
     
     if (user == null) {
       return done(null, false, { message: 'No user found' });
