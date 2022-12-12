@@ -6,7 +6,7 @@ import passport, { initialize } from 'passport';
 
 const app = express();
 require('dotenv').config();
-initialize(passport)
+// initialize(passport)
 
 app.use(cors({
   origin: 'http://localhost:3000',
@@ -28,3 +28,9 @@ app.use(session({
       secure: false
   } 
 }))
+
+app.get("/", (req, res) => {
+  res.status(200).send("Hello World!");
+});
+
+export default app;
