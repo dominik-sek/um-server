@@ -5,6 +5,7 @@ import session from 'express-session';
 import passport from 'passport';
 import { initialize } from './passport-config';
 import prisma from './prisma';
+import usersRouter from './routes/users';
 
 require('dotenv').config();
 const app = express();
@@ -27,15 +28,16 @@ app.use(session({
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         sameSite: true,
         secure: false
-    } 
-}))
+    }
+}));
 initialize(passport);
 app.use(passport.initialize());
 app.use(passport.session());
+app.use('/users', usersRouter);
 
 
 app.get('/', (req, res, next) => {
-  res.status(200).send("OK");
+    res.status(200).send("OK");
 });
 
 app.post('/login', (req, res, next) => {
@@ -49,17 +51,17 @@ app.post('/login', (req, res, next) => {
                     where: {
                         id: req!.user!.person_id
                     }
-                })
-            
+                });
+
                 const findRole = await prisma.role.findUnique({
                     where: {
                         id: findPersonById!.role_id
                     }
-                })
+                });
 
                 res.json({ personId: findPersonById!.id, role: findRole!.name });
-                res.status(200).send()
-            })
+                res.status(200).send();
+            });
         }
     })(req, res, next);
 });
@@ -83,8 +85,7 @@ app.get('/checkauth', async (req, res) => {
                     }
                 }
             }
-        })
-
+        });
         res.status(200).send(
             {
                 role: findUserRole?.role.name,
@@ -95,12 +96,12 @@ app.get('/checkauth', async (req, res) => {
 });
 
 app.delete('/logout', (req, res, next) => {
-    req.logout(function(err) {
+    req.logout(function (err) {
         if (err) {
-          return next(err);
+            return next(err);
         }
         res.status(200).send("OK");
-    });    
-})
+    });
+});
 
 export default app;

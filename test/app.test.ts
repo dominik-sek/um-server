@@ -1,5 +1,3 @@
-//@ts-ignore
-import session from 'supertest-session';
 import app from '../app';
 import request from 'supertest';
 
@@ -37,7 +35,6 @@ describe("Test the login path", () => {
       .post("/login")
       .send({ login: "adminadmin3", password: "12312312312" })
       .then(response => {
-      
         expect(response.statusCode).toBe(200);
         expect(response.body).toEqual(
           expect.objectContaining({
