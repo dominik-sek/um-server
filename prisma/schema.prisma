@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model address {
+  id            Int       @id @default(autoincrement())
+  street        String?   @db.VarChar(64)
+  street_number Int?      @db.SmallInt
+  zip_code      Int?
+  state         String?   @db.VarChar(64)
+  country       String?   @db.VarChar(64)
+  city          String?   @db.VarChar
+  contact       contact[]
+}
+
+model contact {
+  id           Int      @id @default(autoincrement())
+  address_id   Int
+  email        String?  @db.VarChar(64)
+  phone_number Int?
+  address      address  @relation(fields: [address_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  person       person[]
+}
+
+model degree_course {
+  id                    Int                     @id @default(autoincrement())
+  faculty_id            Int
+  name                  String?                 @db.VarChar
+  semester_number       String?                 @db.VarChar
+  studies_type          Int?                    @db.SmallInt
+  faculty               faculty                 @relation(fields: [faculty_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  degree_course_student degree_course_student[]
+  subject               subject[]
+}
+
+model degree_course_student {
+  degree_course_id     Int
+  start_date           DateTime      @db.Date
+  end_date             DateTime?     @db.Date
+  gradebook_student_id Int
+  degree_course        degree_course @relation(fields: [degree_course_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  gradebook            gradebook     @relation(fields: [gradebook_student_id], references: [student_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([degree_course_id, gradebook_student_id])
+}
+
+model faculty {
+  id            Int             @id @default(autoincrement())
+  name          String?         @db.VarChar
+  degree_course degree_course[]
+}
+
+model grade {
+  id                   Int       @default(autoincrement())
+  subject_id           Int
+  teacher_id           Int
+  date                 DateTime? @db.Date
+  gradebook_student_id Int
+  gradebook            gradebook @relation(fields: [gradebook_student_id], references: [student_id], onDelete: NoAction, onUpdate: NoAction)
+  subject              subject   @relation(fields: [subject_id, teacher_id], references: [id, teacher_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([id, subject_id])
+}
+
+model gradebook {
+  gradebook_number      Int                     @default(autoincrement())
+  student_id            Int                     @id
+  degree_course_student degree_course_student[]
+  grade                 grade[]
+  person                person                  @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model person {
+  id               Int        @id @default(autoincrement())
+  contact_id       Int
+  name             String?    @db.VarChar(64)
+  surname          String?    @db.VarChar(64)
+  pesel            BigInt?
+  date_of_birth    DateTime?  @db.Date
+  scientific_title String?    @db.VarChar
+  role_id          Int
+  gradebook        gradebook?
+  contact          contact    @relation(fields: [contact_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  role             role       @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subject          subject[]
+  user             user?
+}
+
+model role {
+  id     Int      @id @default(autoincrement())
+  name   String
+  person person[]
+  user   user[]
+}
+
+model subject {
+  id               Int           @default(autoincrement())
+  teacher_id       Int
+  degree_course_id Int
+  name             String?       @db.VarChar
+  ects             Int?          @db.SmallInt
+  semester         Int?          @db.SmallInt
+  type             String?       @db.VarChar
+  grade            grade[]
+  degree_course    degree_course @relation(fields: [degree_course_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  person           person        @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([id, teacher_id])
+}
+
+model user {
+  person_id Int     @id
+  login     String? @db.VarChar
+  password  String? @db.VarChar
+  role_id   Int
+  person    person  @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  role      role    @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
