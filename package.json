@@ -1,0 +1,41 @@
+{
+  "scripts": {
+    "start-dev": "npx ts-node-dev --respawn --transpile-only app.ts",
+    "prisma-generate": "npx prisma generate",
+    "prisma-pull": "npx prisma db pull",
+    "migrate-dev": "npx prisma migrate dev --name init",
+    "migrate-reset": "npx prisma migrate reset",
+    "migrate-deploy": "npx prisma migrate deploy"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.14",
+    "@types/express-flash": "^0.0.2",
+    "@types/express-session": "^1.17.5",
+    "@types/node": "^18.11.9",
+    "@types/passport": "^1.0.11",
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "jest": "^29.3.1",
+    "nodemon": "^2.0.20",
+    "prisma": "^4.6.1",
+    "superagent": "^8.0.6",
+    "supertest": "^6.3.3",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "@prisma/client": "^4.5.0",
+    "bcrypt": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-flash": "^0.0.2",
+    "express-session": "^1.17.3",
+    "jsonwebtoken": "^8.5.1",
+    "passport": "^0.6.0",
+    "passport-jwt": "^4.0.0",
+    "passport-local": "^1.0.0"
+  }
+}
