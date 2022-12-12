@@ -87,3 +87,25 @@ describe("Test checkauth path", () => {
   });
   
 })
+
+describe("test logout path", () => {
+
+  it("should respond with 200 with session active", done => {
+    request(app)
+      .delete("/logout")
+      .set('Cookie', cookie)
+      .then(response => {
+        expect(response.statusCode).toBe(200);
+        done();
+      })
+  })
+
+  it("should respond with 200 without session active", done => {
+    request(app)
+      .delete("/logout")
+      .then(response => {
+        expect(response.statusCode).toBe(200);
+        done();
+      })
+  })
+})

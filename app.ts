@@ -65,5 +65,34 @@ app.post('/login', (req, res, next) => {
 });
 
 
+app.get('/checkauth', async (req, res) => {
+    if (!req.user) {
+        res.status(401).send({
+            role: null,
+            auth: false
+        });
+    } else {
+        const findUserRole = await prisma.person.findFirst({
+            where: {
+                id: req!.user!.person_id
+            },
+            select: {
+                role: {
+                    select: {
+                        name: true
+                    }
+                }
+            }
+        })
+
+        res.status(200).send(
+            {
+                role: findUserRole?.role.name,
+                auth: true
+            }
+        );
+    }
+});
+
 
 export default app;
