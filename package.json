@@ -6,7 +6,8 @@
     "prisma-pull": "npx prisma db pull",
     "migrate-dev": "npx prisma migrate dev --name init",
     "migrate-reset": "npx prisma migrate reset",
-    "migrate-deploy": "npx prisma migrate deploy"
+    "migrate-deploy": "npx prisma migrate deploy",
+    "test": "jest --watchAll --detectOpenHandles"
   },
   "devDependencies": {
     "@types/cors": "^2.8.13",

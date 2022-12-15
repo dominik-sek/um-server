@@ -15,7 +15,6 @@ export const authRole = (role: string) => {
       if (findRole!.name !== role) {
         res.status(403).send('Forbidden');
       }
-
       next();
     }
 

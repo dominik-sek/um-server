@@ -11,6 +11,7 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
+
 app.use(cors({
     origin: 'http://localhost:3000',
     credentials: true
@@ -35,10 +36,22 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use('/users', usersRouter);
 
-
+/**
+ * @swagger
+ * /:
+ *  get:
+ *     description: Check if server is running  (for testing purposes)
+ *     responses:
+ *      200:
+ *         description: Server is running
+ *      500:
+ *        description: Server is not running
+ * 
+ */
 app.get('/', (req, res, next) => {
     res.status(200).send("OK");
 });
+
 
 app.post('/login', (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
