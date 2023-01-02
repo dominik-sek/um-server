@@ -37,12 +37,39 @@ router.get('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
 });
 
 router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
-  const result = await prisma.person.create({
-    data: {
-      ...req.body,
-    },
-  });
-  res.status(200).send(result);
+  try {
+    const newPerson = await prisma.person.create({
+      data: {
+        ...req.body,
+
+        address: {
+          create: {
+            ...req.body.address
+          }
+        },
+        contact: {
+          create: {
+            ...req.body.contact
+          }
+        },
+        personal: {
+          create: {
+            ...req.body.personal
+          }
+        },
+        library_access: {
+          create: {
+            ...req.body.library_access
+          }
+        }
+      },
+
+    });
+    res.json(newPerson);
+  } catch (err) {
+    //@ts-ignore
+    res.status(500).json({ error: err.message });
+  }
 
 });
 router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
@@ -52,18 +79,47 @@ router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
     },
     data: {
       ...req.body,
+
+      address: {
+        update: {
+          ...req.body.address
+        }
+      },
+      contact: {
+        update: {
+          ...req.body.contact
+        }
+      },
+      personal: {
+        update: {
+          ...req.body.personal
+        }
+      },
+      library_access: {
+        update: {
+          ...req.body.library_access
+        }
+      },
+      // faculty: {
+      //   update: {
+      //     ...req.body.faculty
+      //   }
+      // }
     },
+
   });
   res.status(200).send(result);
 
 });
 router.delete('/:id', authRole(UserRole.ADMIN), async (req, res) => {
+
   const result = await prisma.person.delete({
     where: {
       id: Number(req.params.id),
     },
   });
-  res.status(200).send(result);
+
+  res.status(204).send(result);
 
 });
 

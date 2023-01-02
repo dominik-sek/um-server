@@ -1,5 +1,6 @@
 import app from '../app';
 import request from 'supertest';
+import { person } from '@prisma/client';
 import { NextFunction, Request, Response } from 'express';
 import { UserRole } from '../enums/userRole';
 import { createSecureContext } from 'tls';
@@ -75,6 +76,26 @@ describe("Users routes without auth", () => {
       .get("/users")
       .then(response => {
         expect(response.statusCode).toBe(403);
+        done();
+      }
+      );
+  });
+  it("should return 200 if user is logged and checks another profile", done => {
+    agent
+      .get("/users/2")
+      .then(response => {
+        expect(response.statusCode).toBe(403);
+        // expect(response.body).toMatchObject<person>;
+        done();
+      }
+      );
+  });
+  it("should return 200 if user is logged and checks his own profile", done => {
+    agent
+      .get("/users/1")
+      .then(response => {
+        expect(response.statusCode).toBe(200);
+        expect(response.body).toMatchObject<person>;
         done();
       }
       );
