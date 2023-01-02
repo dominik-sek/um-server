@@ -1,53 +1,53 @@
 
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
-import { user } from '@prisma/client';
+import { account } from '@prisma/client';
 import { PassportStatic } from 'passport';
 import prisma from './prisma';
 
 declare global {
   namespace Express {
-    interface User extends user { }
+    interface User extends account { }
   }
 }
 
 export const initialize = (passport: PassportStatic) => {
-  const authenticateUser = async (login:string, password:string, done: (error: any, user?: user | false, options?: { message: string }) => void) => {
+  const authenticateUser = async (username: string, password: string, done: (error: any, account?: account | false, options?: { message: string; }) => void) => {
 
-    const user = await prisma.user.findFirst({
+    const account = await prisma.account.findFirst({
       where: {
-        login: login
+        username: username
       },
     });
-    
-    if (user == null) {
+
+    if (account == null) {
       return done(null, false, { message: 'No user found' });
     }
 
     try {
-      if (await bcrypt.compare(password, user.password)) {
-        return done(null, user);
+      if (await bcrypt.compare(password, account.password)) {
+        return done(null, account);
       } else {
         return done(null, false, { message: 'Incorrect login or password' });
       }
     } catch (e) {
       return done(e);
     }
-  
-}
+
+  };
 
   passport.use(new LocalStrategy({
-    usernameField: 'login',
+    usernameField: 'username',
     passwordField: 'password',
   },
     authenticateUser));
-  passport.serializeUser((user: user, done) => done(null, user.person_id));
-  passport.deserializeUser(async (id:number, done) => {
-    return done(null, await prisma.user.findFirst({
+  passport.serializeUser((account: account, done) => done(null, account.person_id));
+  passport.deserializeUser(async (id: number, done) => {
+    return done(null, await prisma.account.findFirst({
       where: {
         person_id: id
       },
     }));
   });
 
-}
+};

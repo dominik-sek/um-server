@@ -17,26 +17,26 @@ describe("Authorization middleware", () => {
     } as unknown as Response;
     mockNext = jest.fn();
   });
-  
+
   it("should call next if user is admin", async () => {
     mockRequest.user = {
-      role_id: 3,
-      person_id: 1,
-      login: '',
-      password:'',
+      person_id: 3,
+      username: "",
+      password: "",
+      last_login: new Date(),
     };
     await authRole(UserRole.ADMIN)(mockRequest, mockResponse, mockNext);
     expect(mockNext).toBeCalled();
   });
 
-  it ("should return 403 if user has no permissions", async () => {
+  it("should return 403 if user has no permissions", async () => {
     mockRequest.user = {
-      role_id: 1,
-      person_id: 1,
-      login: '',
-      password: ''
-    }
+      person_id: 2,
+      username: "",
+      password: "",
+      last_login: new Date(),
+    };
     await authRole(UserRole.ADMIN)(mockRequest, mockResponse, mockNext);
     expect(mockResponse.status).toBeCalledWith(403);
   });
-})
+});

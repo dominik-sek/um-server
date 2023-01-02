@@ -1,9 +1,10 @@
 import app from '../app';
 import request from 'supertest';
+import { person } from '@prisma/client';
 
 let cookie = '';
 describe("Test the login path", () => {
-  
+
   it("should respond with 401 given wrong credentials", done => {
     request(app)
       .post("/login")
@@ -15,7 +16,7 @@ describe("Test the login path", () => {
         expect(response.statusCode).toBe(401);
         done();
       });
-  })
+  });
 
   it("should respond with 401 given no credentials", done => {
     request(app)
@@ -28,27 +29,23 @@ describe("Test the login path", () => {
         expect(response.statusCode).toBe(401);
         done();
       });
-  })
+  });
 
   it("should repond with 200 and body with role property given correct credentials", done => {
     request(app)
       .post("/login")
-      .send({ login: "adminadmin3", password: "12312312312" })
+      .send({ username: "baltazaradministrator3", password: "123321321" })
       .then(response => {
         expect(response.statusCode).toBe(200);
-        expect(response.body).toEqual(
-          expect.objectContaining({
-            personId: expect.any(Number),
-            role: expect.any(String)
-          })
-        )
+        //expect response body to be person object from prisma:
+        expect(response.body).toMatchObject<person>;
         cookie = response.headers['set-cookie'];
         done();
       });
   });
 
 
-})
+});
 
 describe("Test checkauth path", () => {
   it("should respond with 401 returning body containing role and auth status given the session is not active", done => {
@@ -61,10 +58,10 @@ describe("Test checkauth path", () => {
             role: null,
             auth: false
           })
-        )
+        );
         done();
-    })
-  })
+      });
+  });
 
   it("should respond with 200 returning containing role and auth status given the session is active", done => {
     request(app)
@@ -77,13 +74,13 @@ describe("Test checkauth path", () => {
             role: expect.any(String),
             auth: expect.any(Boolean)
           })
-        )
+        );
         done();
-      })
-        
+      });
+
   });
-  
-})
+
+});
 
 describe("test logout path", () => {
 
@@ -94,8 +91,8 @@ describe("test logout path", () => {
       .then(response => {
         expect(response.statusCode).toBe(200);
         done();
-      })
-  })
+      });
+  });
 
   it("should respond with 200 without session active", done => {
     request(app)
@@ -103,6 +100,6 @@ describe("test logout path", () => {
       .then(response => {
         expect(response.statusCode).toBe(200);
         done();
-      })
-  })
-})
+      });
+  });
+});

@@ -7,7 +7,7 @@
     "migrate-dev": "npx prisma migrate dev --name init",
     "migrate-reset": "npx prisma migrate reset",
     "migrate-deploy": "npx prisma migrate deploy",
-    "test": "jest --watchAll --detectOpenHandles"
+    "test": "jest --watchAll --detectOpenHandles --verbose"
   },
   "devDependencies": {
     "@types/cors": "^2.8.13",

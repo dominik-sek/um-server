@@ -39,22 +39,10 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use('/users', usersRouter);
 
-/**
- * @swagger
- * /:
- *  get:
- *     description: Check if server is running  (for testing purposes)
- *     responses:
- *      200:
- *         description: Server is running
- *      500:
- *        description: Server is not running
- * 
- */
+
 app.get('/', (req, res, next) => {
     res.status(200).send("OK");
 });
-
 
 app.post('/login', (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
@@ -63,20 +51,23 @@ app.post('/login', (req, res, next) => {
         else {
             req.logIn(user, async (err) => {
                 if (err) throw err;
+                const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ') + '.000000';
+
                 const findPersonById = await prisma.person.findFirst({
                     where: {
-                        id: req!.user!.person_id
+                        id: req.user?.person_id
                     }
                 });
 
-                const findRole = await prisma.role.findUnique({
+                await prisma.account.update({
                     where: {
-                        id: findPersonById!.role_id
+                        person_id: req.user?.person_id
+                    },
+                    data: {
+                        last_login: new Date(timestamp)
                     }
                 });
-
-                res.json({ personId: findPersonById!.id, role: findRole!.name });
-                res.status(200).send();
+                res.status(200).send(findPersonById);
             });
         }
     })(req, res, next);
@@ -92,19 +83,12 @@ app.get('/checkauth', async (req, res) => {
     } else {
         const findUserRole = await prisma.person.findFirst({
             where: {
-                id: req!.user!.person_id
-            },
-            select: {
-                role: {
-                    select: {
-                        name: true
-                    }
-                }
+                id: req.user.person_id
             }
         });
         res.status(200).send(
             {
-                role: findUserRole?.role.name,
+                role: findUserRole?.role,
                 auth: true
             }
         );

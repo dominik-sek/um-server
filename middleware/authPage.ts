@@ -7,17 +7,16 @@ export const authRole = (role: string) => {
     if (!req.user) {
       res.status(401).send('Unauthorized');
     } else {
-      const findRole = await prisma.role.findUnique({
+      const findPerson = await prisma.person.findUnique({
         where: {
-          id: req.user.role_id
+          id: req.user.person_id
         }
       });
-      if (findRole!.name !== role) {
+      if (findPerson?.role !== role) {
         res.status(403).send('Forbidden');
       }
       next();
     }
-
   };
 
 };
@@ -27,20 +26,14 @@ export const authRoleOrPerson = (role: string) => {
     if (!req.user) {
       res.status(401).send('Unauthorized');
     } else {
-      const findRole = await prisma.role.findUnique({
-        where: {
-          id: req.user.role_id
-        }
-      });
       const findPerson = await prisma.person.findUnique({
         where: {
           id: req.user.person_id
         }
       });
-      console.log(findRole?.name, role);
-      if (findRole?.name === role || findPerson?.id === parseInt(req.params.id)) {
-        next();
 
+      if (findPerson?.role === role || findPerson?.id === parseInt(req.params.id)) {
+        next();
       } else {
         res.status(403).send('Forbidden');
       }
