@@ -14,8 +14,9 @@ export const authRole = (role: string) => {
       });
       if (findPerson?.role !== role) {
         res.status(403).send('Forbidden');
+      } else {
+        next();
       }
-      next();
     }
   };
 

@@ -7,7 +7,6 @@ import { createSecureContext } from 'tls';
 const mockSession = require('mock-session');
 let agent = request.agent(app);
 
-
 // let mockAccount = {
 //   login: 'adminadmin3',
 //   password: '12312312312',
@@ -47,28 +46,40 @@ let agent = request.agent(app);
 // };
 
 
-// describe("Users routes without auth", () => {
+describe("Users routes without auth", () => {
 
-//   it("should return 401 if user not logged in", done => {
-//     request(app)
-//       .get("/users")
-//       .then(response => {
-//         expect(response.statusCode).toBe(401);
-//         done();
-//       });
-//   });
+  it("should return 401 if user is not logged in", done => {
+    request(app)
+      .get("/users")
+      .then(response => {
+        expect(response.statusCode).toBe(401);
+        done();
+      });
+  });
+  beforeEach(done => {
+    agent
+      .post("/login")
+      .send({
+        username: "student10001",
+        password: "123123123"
+      })
+      .then(response => {
+        expect(response.statusCode).toBe(200);
+        done();
+      });
+  });
 
-//   it("should return 401 if user has no permissions", done => {
-//     agent
-//       .get("/users")
-//       .then(response => {
-//         expect(response.statusCode).toBe(401);
-//         done();
-//       }
-//       );
-//   });
 
-// });
+  it("should return 403 if user is logged in but has no permissions", done => {
+    agent
+      .get("/users")
+      .then(response => {
+        expect(response.statusCode).toBe(403);
+        done();
+      }
+      );
+  });
+});
 
 // describe("Users routes", () => {
 

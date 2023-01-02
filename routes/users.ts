@@ -18,6 +18,7 @@ router.get('/', authRole(UserRole.ADMIN), async (req, res) => {
 
   res.status(200).send(result);
 });
+
 router.get('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
   const result = await prisma.person.findUnique({
     where: {
