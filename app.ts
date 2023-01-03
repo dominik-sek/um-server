@@ -14,6 +14,7 @@ import coursesRouter from './routes/courses';
 import departmentsRouter from './routes/departments';
 import departmentStudentsRouter from './routes/department-students';
 import facultiesRouter from './routes/faculties';
+import gradesRouter from './routes/grades';
 
 require('dotenv').config();
 const app = express();
@@ -46,6 +47,7 @@ app.use('/courses', coursesRouter);
 app.use('/departments', departmentsRouter);
 app.use('/department-students', departmentStudentsRouter);
 app.use('/faculties', facultiesRouter);
+app.use('/grades', gradesRouter);
 app.get('/', (req, res, next) => {
     res.status(200).send("OK");
 });

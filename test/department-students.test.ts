@@ -58,7 +58,6 @@ describe("Department student routes", () => {
       .then(response => {
         expect(response.statusCode).toBe(201);
         newMockStudentGradebookId = response.body.gradebook[0].gradebook_id;
-        console.log(newMockStudentGradebookId);
         newMockStudentPersonId = response.body.id;
         expect(response.body).toMatchObject<person>;
         done();
