@@ -68,7 +68,6 @@ describe("Department routes", () => {
   });
 
   it("should change data in an existing department and return 200 with object matching `department`", done => {
-    console.log(newMockDepartmentId);
     agent
       .put(`/departments/${newMockDepartmentId}`)
       .send(mockPutDepartment)

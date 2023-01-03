@@ -75,9 +75,22 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
           }
         }
       },
-
     });
-    res.status(201).json(newPerson);
+
+    const result = await prisma.person.findUnique({
+      where: {
+        id: newPerson.id,
+      },
+      include: {
+        address: true,
+        contact: true,
+        personal: true,
+        library_access: true,
+        gradebook: true,
+      },
+    });
+
+    res.status(201).json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
