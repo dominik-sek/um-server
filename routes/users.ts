@@ -14,6 +14,7 @@ router.get('/', authRole(UserRole.ADMIN), async (req, res) => {
         personal: true,
         library_access: true,
         faculty: true,
+        gradebook: true,
       },
     });
 
@@ -34,6 +35,8 @@ router.get('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
         contact: true,
         personal: true,
         library_access: true,
+        gradebook: true,
+
       },
     });
 

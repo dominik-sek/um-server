@@ -39,8 +39,8 @@ describe("Course routes", () => {
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<Array<course>>;
+        done();
       });
-    done();
   });
 
   it("should display one selected course and return 200 with a body matching `course` object", done => {
@@ -49,8 +49,8 @@ describe("Course routes", () => {
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<course>;
+        done();
       });
-    done();
   });
 
   let newMockCourseId: number = 0;
@@ -62,8 +62,8 @@ describe("Course routes", () => {
         expect(response.statusCode).toBe(201);
         expect(response.body).toMatchObject<course>;
         newMockCourseId = response.body.id;
+        done();
       });
-    done();
   });
 
   it("should change data in an existing course and return 200 with object matching `course`", done => {
@@ -73,8 +73,8 @@ describe("Course routes", () => {
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<course>;
+        done();
       });
-    done();
   });
 
   it("should delete an existing course given his id and return 204", done => {
@@ -82,8 +82,8 @@ describe("Course routes", () => {
       .delete(`/courses/${newMockCourseId}`)
       .then(response => {
         expect(response.statusCode).toBe(204);
+        done();
       });
-    done();
   });
 
 });

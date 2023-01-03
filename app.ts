@@ -12,6 +12,7 @@ import prisma from './prisma';
 import usersRouter from './routes/users';
 import coursesRouter from './routes/courses';
 import departmentsRouter from './routes/departments';
+import departmentStudentsRouter from './routes/department-students';
 
 require('dotenv').config();
 const app = express();
@@ -42,7 +43,7 @@ app.use(passport.session());
 app.use('/users', usersRouter);
 app.use('/courses', coursesRouter);
 app.use('/departments', departmentsRouter);
-
+app.use('/department-students', departmentStudentsRouter);
 
 app.get('/', (req, res, next) => {
     res.status(200).send("OK");
