@@ -129,6 +129,9 @@ describe("Department student routes", () => {
         done();
       });
 
+  });
+
+  afterAll(done => {
     agent
       .delete(`/users/${newMockStudentPersonId}`)
       .then(response => {
