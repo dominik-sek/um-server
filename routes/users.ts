@@ -65,7 +65,7 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
       },
 
     });
-    res.json(newPerson);
+    res.status(201).json(newPerson);
   } catch (err) {
     //@ts-ignore
     res.status(500).json({ error: err.message });
@@ -100,11 +100,7 @@ router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
           ...req.body.library_access
         }
       },
-      // faculty: {
-      //   update: {
-      //     ...req.body.faculty
-      //   }
-      // }
+
     },
 
   });
