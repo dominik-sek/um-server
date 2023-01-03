@@ -97,7 +97,6 @@ describe("Users routes without auth/lower permissions", () => {
 
 describe("Users routes with admin auth", () => {
 
-  let newPersonId: number = 0;
   beforeEach(done => {
     agent
       .post("/login")
@@ -107,6 +106,8 @@ describe("Users routes with admin auth", () => {
         done();
       });
   });
+
+  let newPersonId: number = 0;
   it("should return 201 and return body with newly added person", done => {
     agent
       .post("/users")

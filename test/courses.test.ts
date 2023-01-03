@@ -13,7 +13,7 @@ let mockCourse = {
   type: "Test type",
   ects: 5,
   person_id: 1,
-  semester: 1,
+  semester: '1',
   department: 1,
 };
 

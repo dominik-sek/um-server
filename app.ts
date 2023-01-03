@@ -8,12 +8,14 @@ import session from 'express-session';
 import passport from 'passport';
 import { initialize } from './passport-config';
 import prisma from './prisma';
+
 import usersRouter from './routes/users';
+import coursesRouter from './routes/courses';
+import departmentsRouter from './routes/departments';
 
 require('dotenv').config();
 const app = express();
 app.use(express.json());
-
 
 app.use(cors({
     origin: 'http://localhost:3000',
@@ -28,7 +30,6 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        // maxAge: 10000, // 10 seconds
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         sameSite: true,
         secure: false
@@ -37,7 +38,10 @@ app.use(session({
 initialize(passport);
 app.use(passport.initialize());
 app.use(passport.session());
+
 app.use('/users', usersRouter);
+app.use('/courses', coursesRouter);
+app.use('/departments', departmentsRouter);
 
 
 app.get('/', (req, res, next) => {

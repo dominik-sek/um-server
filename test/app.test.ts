@@ -37,7 +37,6 @@ describe("Test the login path", () => {
       .send({ username: "baltazaradministrator3", password: "123321321" })
       .then(response => {
         expect(response.statusCode).toBe(200);
-        //expect response body to be person object from prisma:
         expect(response.body).toMatchObject<person>;
         cookie = response.headers['set-cookie'];
         done();
