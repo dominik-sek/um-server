@@ -73,7 +73,7 @@ describe("faculty endpoint tests:", () => {
     agent
       .delete(`/faculties/${mockFacultyId}`)
       .then(response => {
-        expect(response.statusCode).toBe(200);
+        expect(response.statusCode).toBe(204);
         expect(response.body).toMatchObject<faculty>;
         done();
       });
