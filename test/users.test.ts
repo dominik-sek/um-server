@@ -1,11 +1,6 @@
 import app from '../app';
 import request from 'supertest';
 import { person } from '@prisma/client';
-import { NextFunction, Request, Response } from 'express';
-import { UserRole } from '../enums/userRole';
-import { createSecureContext } from 'tls';
-// import { user, person, address, contact, role } from '@prisma/client';
-const mockSession = require('mock-session');
 let agent = request.agent(app);
 
 let studentAccount = {
@@ -102,7 +97,7 @@ describe("Users routes without auth/lower permissions", () => {
 
 describe("Users routes with admin auth", () => {
 
-  let postId: number = 0;
+  let newPersonId: number = 0;
   beforeEach(done => {
     agent
       .post("/login")
@@ -119,7 +114,7 @@ describe("Users routes with admin auth", () => {
       .then(response => {
         expect(response.statusCode).toBe(201);
         expect(response.body).toMatchObject<person>;
-        postId = response.body.id;
+        newPersonId = response.body.id;
         done();
       });
   });
@@ -127,7 +122,7 @@ describe("Users routes with admin auth", () => {
 
   it("should accept person body and update person", done => {
     agent
-      .put(`/users/${postId}`)
+      .put(`/users/${newPersonId}`)
       .send(mockPutPerson)
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -137,7 +132,7 @@ describe("Users routes with admin auth", () => {
   });
   it("should delete the previously created person", done => {
     agent
-      .delete(`/users/${postId}`)
+      .delete(`/users/${newPersonId}`)
       .then(response => {
         expect(response.statusCode).toBe(204);
         done();
