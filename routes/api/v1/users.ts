@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import prisma from '../prisma';
-import { authRole, authRoleOrPerson } from '../middleware/authPage';
-import { UserRole } from '../enums/userRole';
+import prisma from '../../../prisma';
+import { authRole, authRoleOrPerson } from '../../../middleware/authPage';
+import { UserRole } from '../../../enums/userRole';
 
 const router = Router();
-
 router.get('/', authRole(UserRole.ADMIN), async (req, res) => {
+
   try {
     const result = await prisma.person.findMany({
       include: {
@@ -18,6 +18,33 @@ router.get('/', authRole(UserRole.ADMIN), async (req, res) => {
       },
     });
 
+    res.status(200).send(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+router.get('/profile', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]), async (req, res) => {
+  try {
+    const result = await prisma.person.findUnique({
+      where: {
+        id: Number(req.user?.person_id),
+      },
+      include: {
+        address: true,
+        contact: true,
+        personal: true,
+        library_access: true,
+        faculty: true,
+        gradebook: true,
+        account: {
+          select: {
+            account_images: true,
+            last_login: true,
+          }
+        }
+      },
+
+    });
     res.status(200).send(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

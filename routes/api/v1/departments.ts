@@ -1,8 +1,7 @@
 import { Router } from 'express';
-import prisma from '../prisma';
-import { authRole } from '../middleware/authPage';
-import { UserRole } from '../enums/userRole';
-import { department } from '@prisma/client';
+import prisma from '../../../prisma';
+import { authRole } from '../../../middleware/authPage';
+import { UserRole } from '../../../enums/userRole';
 const router = Router();
 
 router.get('/', authRole(UserRole.ADMIN), async (req, res) => {

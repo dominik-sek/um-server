@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import prisma from '../prisma';
-import { authRole, authRoleOrPerson } from '../middleware/authPage';
-import { UserRole } from '../enums/userRole';
+import prisma from '../../../prisma';
+import { authRole, authRoleOrPerson } from '../../../middleware/authPage';
+import { UserRole } from '../../../enums/userRole';
 
 const router = Router();
 const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ') + '.000000';

@@ -6,22 +6,18 @@ import cors from 'cors';
 import flash from 'express-flash';
 import session from 'express-session';
 import passport from 'passport';
-import { initialize } from './passport-config';
 import prisma from './prisma';
-
-import usersRouter from './routes/users';
-import coursesRouter from './routes/courses';
-import departmentsRouter from './routes/departments';
-import departmentStudentsRouter from './routes/department-students';
-import facultiesRouter from './routes/faculties';
-import gradesRouter from './routes/grades';
+import { initialize } from './passport-config';
+import apiV1 from './routes/api/v1';
 
 require('dotenv').config();
 const app = express();
-app.use(express.json());
 
+app.use('/api/v1', apiV1);
+
+app.use(express.json());
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: 'http://localhost:5173',
     credentials: true
 }));
 const PORT = 4000 || process.env.PORT;
@@ -42,19 +38,14 @@ initialize(passport);
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use('/users', usersRouter);
-app.use('/courses', coursesRouter);
-app.use('/departments', departmentsRouter);
-app.use('/department-students', departmentStudentsRouter);
-app.use('/faculties', facultiesRouter);
-app.use('/grades', gradesRouter);
-app.get('/', (req, res, next) => {
+
+app.get('/api/v1/', (req, res, next) => {
     res.status(200).send("OK");
 });
 
-app.post('/login', (req, res, next) => {
+app.post('/api/v1/login', (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
-        if (err) throw err;
+        if (err) { return next(err); };
         if (!user) res.status(401).send(info.message);
         else {
             req.logIn(user, async (err) => {
@@ -82,7 +73,7 @@ app.post('/login', (req, res, next) => {
 });
 
 
-app.get('/checkauth', async (req, res) => {
+app.get('/api/v1/check-auth', async (req, res) => {
     if (!req.user) {
         res.status(401).send({
             role: null,
@@ -103,7 +94,7 @@ app.get('/checkauth', async (req, res) => {
     }
 });
 
-app.delete('/logout', (req, res, next) => {
+app.delete('/api/v1/logout', (req, res, next) => {
     req.logout(function (err) {
         if (err) {
             return next(err);
