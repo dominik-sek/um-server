@@ -38,14 +38,20 @@ router.get('/profile', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER, UserR
         gradebook: true,
         account: {
           select: {
-            account_images: true,
+            account_images: {
+              select: {
+                avatar_url: true,
+                background_url: true,
+              }
+            },
             last_login: true,
           }
         }
       },
 
     });
-    res.status(200).send(result);
+
+    res.status(200).json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -74,7 +80,6 @@ router.get('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
   }
 
 });
-
 router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
   try {
     const newPerson = await prisma.person.create({
@@ -123,6 +128,54 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
   }
 
 });
+
+router.put('/profile/avatar', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]), async (req, res) => {
+  try {
+    const result = await prisma.account.update({
+      where: {
+        person_id: req.user?.person_id
+      },
+      data: {
+        account_images: {
+          upsert: {
+            update: {
+              avatar_url: req.body.avatar_url
+            },
+            create: {
+              avatar_url: req.body.avatar_url,
+              background_url: ''
+            }
+
+          },
+
+        }
+      },
+    });
+    res.status(200).send(result);
+  } catch (err: any) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+router.put('/profile/background', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]), async (req, res) => {
+  try {
+    const result = await prisma.account.update({
+      where: {
+        person_id: req.user?.person_id
+      },
+      data: {
+        account_images: {
+          update: {
+            background_url: req.body.background_url
+          }
+        }
+      },
+    });
+    res.status(200).send(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
   try {
     const result = await prisma.person.update({
@@ -152,7 +205,6 @@ router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
             ...req.body.library_access
           }
         },
-
       },
 
     });

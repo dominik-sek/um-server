@@ -9,11 +9,12 @@ import passport from 'passport';
 import prisma from './prisma';
 import { initialize } from './passport-config';
 import apiV1 from './routes/api/v1';
+import { authRoleOrPerson } from './middleware/authPage';
+import { UserRole } from './enums/userRole';
+import cloudinary from 'cloudinary';
 
 require('dotenv').config();
 const app = express();
-
-app.use('/api/v1', apiV1);
 
 app.use(express.json());
 app.use(cors({
@@ -38,14 +39,29 @@ initialize(passport);
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use('/api/v1', apiV1);
 
 app.get('/api/v1/', (req, res, next) => {
     res.status(200).send("OK");
 });
+app.get('/api/v1/cloud-signature', authRoleOrPerson([UserRole.ADMIN, UserRole.STUDENT, UserRole.TEACHER]), (req, res, next) => {
+    const timestamp = Math.round((new Date()).getTime() / 1000);
+    const signature = cloudinary.utils.api_sign_request({
+        timestamp: timestamp
+    }, process.env.CLOUDINARY_SECRET!);
+    res.status(200).send({
+        signature: signature,
+        timestamp: timestamp
+    });
+
+});
 
 app.post('/api/v1/login', (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
-        if (err) { return next(err); };
+        if (err) {
+            console.log('err', err);
+            return next(err);
+        };
         if (!user) res.status(401).send(info.message);
         else {
             req.logIn(user, async (err) => {
@@ -99,8 +115,10 @@ app.delete('/api/v1/logout', (req, res, next) => {
         if (err) {
             return next(err);
         }
-        res.status(200).send("OK");
+        res.status(200).json({ message: 'Logged out' });
     });
 });
+
+
 
 export default app;

@@ -34,6 +34,7 @@
   "dependencies": {
     "@prisma/client": "^4.5.0",
     "bcrypt": "^5.1.0",
+    "cloudinary": "^1.33.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
