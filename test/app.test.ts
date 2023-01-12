@@ -7,7 +7,7 @@ describe("Test the login path", () => {
 
   it("should respond with 401 given wrong credentials", done => {
     request(app)
-      .post("/login")
+      .post("/api/v1/login")
       .send({
         login: "123123312",
         password: "adsasd123sda"
@@ -20,7 +20,7 @@ describe("Test the login path", () => {
 
   it("should respond with 401 given no credentials", done => {
     request(app)
-      .post("/login")
+      .post("/api/v1/login")
       .send({
         login: "",
         password: ""
@@ -33,7 +33,7 @@ describe("Test the login path", () => {
 
   it("should repond with 200 and body with role property given correct credentials", done => {
     request(app)
-      .post("/login")
+      .post("/api/v1/login")
       .send({ username: "baltazaradministrator3", password: "123321321" })
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -49,7 +49,7 @@ describe("Test the login path", () => {
 describe("Test checkauth path", () => {
   it("should respond with 401 returning body containing role and auth status given the session is not active", done => {
     request(app)
-      .get("/checkauth")
+      .get("/api/v1/check-auth")
       .then(response => {
         expect(response.statusCode).toBe(401);
         expect(response.body).toEqual(
@@ -64,7 +64,7 @@ describe("Test checkauth path", () => {
 
   it("should respond with 200 returning containing role and auth status given the session is active", done => {
     request(app)
-      .get("/checkauth")
+      .get("/api/v1/check-auth")
       .set('Cookie', cookie)
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -85,7 +85,7 @@ describe("test logout path", () => {
 
   it("should respond with 200 with session active", done => {
     request(app)
-      .delete("/logout")
+      .delete("/api/v1/logout")
       .set('Cookie', cookie)
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -95,7 +95,7 @@ describe("test logout path", () => {
 
   it("should respond with 200 without session active", done => {
     request(app)
-      .delete("/logout")
+      .delete("/api/v1/logout")
       .then(response => {
         expect(response.statusCode).toBe(200);
         done();

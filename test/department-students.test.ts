@@ -40,7 +40,7 @@ describe("Department student routes", () => {
 
   beforeAll(done => {
     agent
-      .post("/login")
+      .post("/api/v1/login")
       .send(adminAccount)
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -53,7 +53,7 @@ describe("Department student routes", () => {
 
   beforeAll(done => {
     agent
-      .post('/users/')
+      .post('/api/v1/users/')
       .send(mockStudent)
       .then(response => {
         expect(response.statusCode).toBe(201);
@@ -67,7 +67,7 @@ describe("Department student routes", () => {
 
   it("should display a list of students in all departments and return 200 with a body consiting of multiple `student` objects", done => {
     agent
-      .get('/department-students/')
+      .get('/api/v1/department-students/')
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<Array<department_students>>;
@@ -78,7 +78,7 @@ describe("Department student routes", () => {
 
   it("should display a list of students in one department given its id and return 200 with a body consiting of multiple `department_students` objects", done => {
     agent
-      .get('/department-students/dept/12')
+      .get('/api/v1/department-students/dept/12')
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<Array<department_students>>;
@@ -88,7 +88,7 @@ describe("Department student routes", () => {
 
   it("should display a list of departments that a given student is part of given gradebook_id and return 200 with a body consiting of multiple `department_students` objects", done => {
     agent
-      .get('/department-students/student/10001')
+      .get('/api/v1/department-students/student/10001')
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<Array<department_students>>;
@@ -100,7 +100,7 @@ describe("Department student routes", () => {
   it("should add newly created person(student) to an existing department, returning 201 with said student's gradebook", done => {
 
     agent
-      .post('/department-students/')
+      .post('/api/v1/department-students/')
       .send({ gradebook_id: newMockStudentGradebookId, department_id: 12 })
       .then(response => {
         expect(response.statusCode).toBe(201);
@@ -111,7 +111,7 @@ describe("Department student routes", () => {
 
   it("should change a student's department and return 200 with a body matching `department_students` object", done => {
     agent
-      .put(`/department-students/student/${newMockStudentGradebookId}`)
+      .put(`/api/v1/department-students/student/${newMockStudentGradebookId}`)
       .send({ department_id: 10 })
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -122,7 +122,7 @@ describe("Department student routes", () => {
 
   it("should delete a student from a department and return 200 with a body matching `department_students` object", done => {
     agent
-      .delete(`/department-students/student/${newMockStudentGradebookId}`)
+      .delete(`/api/v1/department-students/student/${newMockStudentGradebookId}`)
       .then(response => {
         expect(response.statusCode).toBe(204);
         done();
@@ -132,7 +132,7 @@ describe("Department student routes", () => {
 
   afterAll(done => {
     agent
-      .delete(`/users/${newMockStudentPersonId}`)
+      .delete(`/api/v1/users/${newMockStudentPersonId}`)
       .then(response => {
         expect(response.statusCode).toBe(204);
         done();

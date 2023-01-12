@@ -24,7 +24,7 @@ describe("Course routes", () => {
 
   beforeAll(done => {
     agent
-      .post("/login")
+      .post("/api/v1/login")
       .send(adminAccount)
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -35,7 +35,7 @@ describe("Course routes", () => {
 
   it("should display all courses and return 200 with a body consiting of multiple `course` objects", done => {
     agent
-      .get("/courses")
+      .get("/api/v1/courses")
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<Array<course>>;
@@ -45,7 +45,7 @@ describe("Course routes", () => {
 
   it("should display one selected course and return 200 with a body matching `course` object", done => {
     agent
-      .get("/courses/1")
+      .get("/api/v1/courses/1")
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<course>;
@@ -56,7 +56,7 @@ describe("Course routes", () => {
   let newMockCourseId: number = 0;
   it("should add a new course and return 201 with object matching `course`", done => {
     agent
-      .post("/courses")
+      .post("/api/v1/courses")
       .send(mockCourse)
       .then(response => {
         expect(response.statusCode).toBe(201);
@@ -68,7 +68,7 @@ describe("Course routes", () => {
 
   it("should change data in an existing course and return 200 with object matching `course`", done => {
     agent
-      .put(`/courses/${newMockCourseId}`)
+      .put(`/api/v1/courses/${newMockCourseId}`)
       .send(mockPutCourse)
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -79,7 +79,7 @@ describe("Course routes", () => {
 
   it("should delete an existing course given his id and return 204", done => {
     agent
-      .delete(`/courses/${newMockCourseId}`)
+      .delete(`/api/v1/courses/${newMockCourseId}`)
       .then(response => {
         expect(response.statusCode).toBe(204);
         done();

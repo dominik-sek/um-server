@@ -47,7 +47,7 @@ describe("Users routes without auth/lower permissions", () => {
 
   it("should return 401 if user is not logged in", done => {
     request(app)
-      .get("/users")
+      .get("/api/v1/users")
       .then(response => {
         expect(response.statusCode).toBe(401);
         done();
@@ -55,7 +55,7 @@ describe("Users routes without auth/lower permissions", () => {
   });
   beforeEach(done => {
     agent
-      .post("/login")
+      .post("/api/v1/login")
       .send(studentAccount)
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -66,7 +66,7 @@ describe("Users routes without auth/lower permissions", () => {
 
   it("should return 403 if user is logged in but has no permissions", done => {
     agent
-      .get("/users")
+      .get("/api/v1/users")
       .then(response => {
         expect(response.statusCode).toBe(403);
         done();
@@ -75,7 +75,7 @@ describe("Users routes without auth/lower permissions", () => {
   });
   it("should return 403 if user is logged and checks another profile", done => {
     agent
-      .get("/users/2")
+      .get("/api/v1/users/2")
       .then(response => {
         expect(response.statusCode).toBe(403);
         done();
@@ -85,7 +85,7 @@ describe("Users routes without auth/lower permissions", () => {
 
   it("should return 200 and object of type `person` if user is logged and checks his own profile", done => {
     agent
-      .get("/users/1")
+      .get("/api/v1/users/1")
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<person>;
@@ -99,7 +99,7 @@ describe("Users routes with admin auth", () => {
 
   beforeEach(done => {
     agent
-      .post("/login")
+      .post("/api/v1/login")
       .send(adminAccount)
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -110,7 +110,7 @@ describe("Users routes with admin auth", () => {
   let newPersonId: number = 0;
   it("should return 201 and return body with newly added person", done => {
     agent
-      .post("/users")
+      .post("/api/v1/users")
       .send(mockPerson)
       .then(response => {
         expect(response.statusCode).toBe(201);
@@ -123,7 +123,7 @@ describe("Users routes with admin auth", () => {
 
   it("should accept person body and update person", done => {
     agent
-      .put(`/users/${newPersonId}`)
+      .put(`/api/v1/users/${newPersonId}`)
       .send(mockPutPerson)
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -131,9 +131,10 @@ describe("Users routes with admin auth", () => {
         done();
       });
   });
+
   it("should delete the previously created person", done => {
     agent
-      .delete(`/users/${newPersonId}`)
+      .delete(`/api/v1/users/${newPersonId}`)
       .then(response => {
         expect(response.statusCode).toBe(204);
         done();

@@ -46,6 +46,7 @@ app.get('/api/v1/', (req, res, next) => {
 });
 app.get('/api/v1/cloud-signature', authRoleOrPerson([UserRole.ADMIN, UserRole.STUDENT, UserRole.TEACHER]), (req, res, next) => {
     const timestamp = Math.round((new Date()).getTime() / 1000);
+    // @ts-ignore there are no types avaliable for cloudinary library and im too lazy to write them
     const signature = cloudinary.utils.api_sign_request({
         timestamp: timestamp
     }, process.env.CLOUDINARY_SECRET!);

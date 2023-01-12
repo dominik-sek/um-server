@@ -40,7 +40,7 @@ describe("Department student routes", () => {
 
   beforeAll(done => {
     agent
-      .post("/login")
+      .post("/api/v1/login")
       .send(adminAccount)
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -54,14 +54,12 @@ describe("Department student routes", () => {
 
   beforeAll(done => {
     agent
-      .post('/users/')
+      .post('/api/v1/users/')
       .send(mockStudent)
       .then(response => {
         expect(response.statusCode).toBe(201);
         newMockStudentGradebookId = response.body.gradebook[0].gradebook_id;
         newMockStudentPersonId = response.body.id;
-        console.log('newMockStudentGradebookId: ' + newMockStudentGradebookId);
-        console.log('newMockStudentPersonId: ' + newMockStudentPersonId);
         expect(response.body).toMatchObject<person>;
         done();
       });
@@ -70,7 +68,7 @@ describe("Department student routes", () => {
 
   it("should get all grades", done => {
     agent
-      .get('/grades/')
+      .get('/api/v1/grades/')
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<grade[]>;
@@ -81,7 +79,7 @@ describe("Department student routes", () => {
 
   it("should add grade", done => {
     agent
-      .post('/grades/')
+      .post('/api/v1/grades/')
       .send({
         gradebook_id: newMockStudentGradebookId,
         course_id: 1,
@@ -96,7 +94,7 @@ describe("Department student routes", () => {
 
   it("should get grade by gradebook_id", done => {
     agent
-      .get('/grades/student/' + newMockStudentGradebookId)
+      .get('/api/v1/grades/student/' + newMockStudentGradebookId)
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<grade[]>;
@@ -107,7 +105,7 @@ describe("Department student routes", () => {
 
   it("should get grade by course id", done => {
     agent
-      .get('/grades/course/1')
+      .get('/api/v1/grades/course/1')
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<grade[]>;
@@ -117,7 +115,7 @@ describe("Department student routes", () => {
 
   it("should update grade", done => {
     agent
-      .put('/grades/student/' + newMockStudentGradebookId + '/course/1')
+      .put('/api/v1/grades/student/' + newMockStudentGradebookId + '/course/1')
       .send({
         gradebook_id: newMockStudentGradebookId,
         course_id: 1,
@@ -132,7 +130,7 @@ describe("Department student routes", () => {
 
   it("should delete grade", done => {
     agent
-      .delete('/grades/student/' + newMockStudentGradebookId + '/course/1')
+      .delete('/api/v1/grades/student/' + newMockStudentGradebookId + '/course/1')
       .then(response => {
         expect(response.statusCode).toBe(204);
         done();
@@ -142,7 +140,7 @@ describe("Department student routes", () => {
   // ======================
   afterAll(done => {
     agent
-      .delete('/users/' + newMockStudentPersonId)
+      .delete('/api/v1/users/' + newMockStudentPersonId)
       .then(response => {
         expect(response.statusCode).toBe(204);
         done();

@@ -15,6 +15,16 @@ router.get('/', authRole(UserRole.ADMIN), async (req, res) => {
         library_access: true,
         faculty: true,
         gradebook: true,
+        account: {
+          select: {
+            account_images: {
+              select: {
+                avatar_url: true,
+                background_url: true,
+              }
+            }
+          }
+        }
       },
     });
 

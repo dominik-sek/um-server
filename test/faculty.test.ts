@@ -18,7 +18,7 @@ mockFacultyPut.name = "New name";
 describe("faculty endpoint tests:", () => {
   beforeAll(done => {
     agent
-      .post("/login")
+      .post("/api/v1/login")
       .send(adminAccount)
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -28,7 +28,7 @@ describe("faculty endpoint tests:", () => {
 
   it("should display all faculties and return 200 with a body consiting of multiple `faculty` objects", done => {
     agent
-      .get("/faculties")
+      .get("/api/v1/faculties")
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<Array<faculty>>;
@@ -38,7 +38,7 @@ describe("faculty endpoint tests:", () => {
 
   it("should add a new faculty and return 201 with object matching `faculty`", done => {
     agent
-      .post("/faculties")
+      .post("/api/v1/faculties")
       .send(mockFaculty)
       .then(response => {
         expect(response.statusCode).toBe(201);
@@ -50,7 +50,7 @@ describe("faculty endpoint tests:", () => {
 
   it("should display one selected faculty and return 200 with a body matching `faculty` object", done => {
     agent
-      .get(`/faculties/${mockFacultyId}`)
+      .get(`/api/v1/faculties/${mockFacultyId}`)
       .then(response => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatchObject<faculty>;
@@ -60,7 +60,7 @@ describe("faculty endpoint tests:", () => {
 
   it("should update a faculty and return 200 with object matching `faculty`", done => {
     agent
-      .put(`/faculties/${mockFacultyId}`)
+      .put(`/api/v1/faculties/${mockFacultyId}`)
       .send(mockFacultyPut)
       .then(response => {
         expect(response.statusCode).toBe(200);
@@ -71,7 +71,7 @@ describe("faculty endpoint tests:", () => {
 
   it("should delete a faculty and return 200 with object matching `faculty`", done => {
     agent
-      .delete(`/faculties/${mockFacultyId}`)
+      .delete(`/api/v1/faculties/${mockFacultyId}`)
       .then(response => {
         expect(response.statusCode).toBe(204);
         expect(response.body).toMatchObject<faculty>;
