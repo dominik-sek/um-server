@@ -2,19 +2,33 @@ import { Router } from 'express';
 import prisma from '../../../prisma';
 import { authRole, authRoleOrPerson } from '../../../middleware/authPage';
 import { UserRole } from '../../../enums/userRole';
+import { address, contact, library_access, person, personal } from '@prisma/client';
 
 const router = Router();
 router.get('/', authRole(UserRole.ADMIN), async (req, res) => {
 
   try {
-    const result = await prisma.person.findMany({
+    const result:person[] = await prisma.person.findMany({
       include: {
         address: true,
         contact: true,
         personal: true,
         library_access: true,
         faculty: true,
-        gradebook: true,
+        course: true,
+        gradebook: {
+          include: {
+            department_students: {
+              include: {
+                department: {
+                  include: {
+                    faculty: true
+                  }
+                },
+              }
+            },
+          }
+        },
         account: {
           select: {
             account_images: {
@@ -45,7 +59,20 @@ router.get('/profile', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER, UserR
         personal: true,
         library_access: true,
         faculty: true,
-        gradebook: true,
+        course: true,
+        gradebook: {
+          include: {
+            department_students: {
+              include: {
+                department: {
+                  include: {
+                    faculty: true
+                  }
+                },
+              }
+            },
+          }
+        },
         account: {
           select: {
             account_images: {
@@ -188,6 +215,7 @@ router.put('/profile/background', authRoleOrPerson([UserRole.ADMIN, UserRole.TEA
 });
 router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
   try {
+
     const result = await prisma.person.update({
       where: {
         id: Number(req.params.id),
@@ -197,29 +225,26 @@ router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
 
         address: {
           update: {
-            ...req.body.address
+            ...req.body.address as address || undefined
           }
         },
         contact: {
           update: {
-            ...req.body.contact
+            ...req.body.contact as contact || undefined
           }
         },
         personal: {
           update: {
-            ...req.body.personal
+            ...req.body.personal as personal || undefined
           }
         },
-        library_access: {
-          update: {
-            ...req.body.library_access
-          }
-        },
+        library_access: req.body.library_access as library_access || undefined
       },
 
     });
     res.status(200).send(result);
   } catch (err: any) {
+    console.log(err)
     res.status(500).json({ error: err.message });
   }
 
