@@ -41,15 +41,16 @@ model contact {
 }
 
 model course {
-  id                                       Int        @id(map: "course_pk") @default(autoincrement())
-  name                                     String     @db.VarChar(64)
-  type                                     String     @db.VarChar(64)
+  id                                       Int              @id(map: "course_pk") @default(autoincrement())
+  name                                     String           @db.VarChar(64)
+  type                                     String           @db.VarChar(64)
   ects                                     Int
   person_id                                Int
-  semester                                 String     @db.Char(2)
+  semester                                 String           @db.Char(2)
   department                               Int
-  department_course_departmentTodepartment department @relation("course_departmentTodepartment", fields: [department], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_department_id_fk")
-  person                                   person     @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_person_id_fk")
+  department_course_departmentTodepartment department       @relation("course_departmentTodepartment", fields: [department], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_department_id_fk")
+  person                                   person           @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_person_id_fk")
+  course_students                          course_students[]
   grade                                    grade[]
 }
 
@@ -93,6 +94,7 @@ model gradebook {
   person_id           Int?
   gradebook_id        Int                  @id(map: "gradebook_pk") @default(0)
   semester            String               @db.Char(1)
+  course_students     course_students[]
   department_students department_students?
   grade               grade[]
   person              person?              @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gradebook_person_id_fk")
@@ -144,4 +146,11 @@ model personal {
 model role {
   name                     String   @id(map: "role_pk") @db.VarChar(12)
   person_person_roleTorole person[] @relation("person_roleTorole")
+}
+
+model course_students {
+  course_id    Int       @id(map: "course_students_pk")
+  gradebook_id Int
+  course       course    @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_students_course_id_fk")
+  gradebook    gradebook @relation(fields: [gradebook_id], references: [gradebook_id], onDelete: NoAction, onUpdate: NoAction, map: "course_students_gradebook_gradebook_id_fk")
 }

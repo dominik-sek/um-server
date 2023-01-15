@@ -140,7 +140,7 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
         },
         library_access: {
           create: {
-            ...req.body.library_access
+            ...req.body.library_access as library_access || undefined
           }
         }
       },
