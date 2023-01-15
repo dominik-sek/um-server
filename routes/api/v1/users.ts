@@ -18,15 +18,11 @@ router.get('/', authRole(UserRole.ADMIN), async (req, res) => {
         course: true,
         gradebook: {
           include: {
-            department_students: {
+            course_students: {
               include: {
-                department: {
-                  include: {
-                    faculty: true
-                  }
-                },
-              }
-            },
+                 course : true,
+               }
+            }
           }
         },
         account: {
@@ -61,17 +57,20 @@ router.get('/profile', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER, UserR
         faculty: true,
         course: true,
         gradebook: {
-          include: {
+          select: {
+            gradebook_id: true,
+            semester: true,
             department_students: {
-              include: {
-                department: {
-                  include: {
-                    faculty: true
-                  }
-                },
+              select: {
+                department: true
+              },
+            },
+            course_students: {
+              select: {
+                course: true,
               }
             },
-          }
+          },
         },
         account: {
           select: {
@@ -190,7 +189,6 @@ router.put('/profile/avatar', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER
     });
     res.status(200).send(result);
   } catch (err: any) {
-    console.log(err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -244,7 +242,6 @@ router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
     });
     res.status(200).send(result);
   } catch (err: any) {
-    console.log(err)
     res.status(500).json({ error: err.message });
   }
 

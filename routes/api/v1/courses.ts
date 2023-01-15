@@ -38,18 +38,47 @@ router.get(':id/students', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (
     });
     res.status(200).send(result);
   } catch (err: any) {
-    console.log(err)
     res.status(500).json({ error: err.message });
   }
 })
-//get students for all courses that a teacher teaches
-router.get('/students', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
+router.get('/student/:gradebook_id', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]), async (req, res) => {
+  try {
+    const result = await prisma.course_students.findMany({
+      where: {
+        gradebook_id: Number(req.params.gradebook_id),
+      },
+      select: {
+        course: true,
+        gradebook: {
+          select: {
+            grade: {
+              select: {
+                grade: true,
+                entry_time: true,
+                grade_Id: true,
+              }
+            }
+          }
+        }
+      }
+    });
+    res.status(200).send(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+  
+})
+
+router.get('/students', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
   try {
     const result = await prisma.course.findMany({
       where: {
         person_id: Number(req.user?.person_id),
       },
-      include: {
+      select: {
+        name: true,
+        id: true,
+        type: true,
         course_students: {
           include: {
             gradebook: {

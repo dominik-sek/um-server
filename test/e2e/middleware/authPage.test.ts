@@ -1,8 +1,8 @@
-import app from '../../app';
+import app from '../../../app';
 import request from 'supertest';
 import { NextFunction, Request, Response } from 'express';
-import { authRole, authRoleOrPerson } from '../../middleware/authPage';
-import { UserRole } from '../../enums/userRole';
+import { authRole, authRoleOrPerson } from '../../../middleware/authPage';
+import { UserRole } from '../../../enums/userRole';
 
 describe("Authorization middleware", () => {
   let mockRequest: Request;

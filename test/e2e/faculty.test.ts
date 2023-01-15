@@ -1,4 +1,4 @@
-import app from '../app';
+import app from '../../app';
 import request from 'supertest';
 import { faculty } from '@prisma/client';
 let agent = request.agent(app);

@@ -60,7 +60,6 @@ app.get('/api/v1/cloud-signature', authRoleOrPerson([UserRole.ADMIN, UserRole.ST
 app.post('/api/v1/login', (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
         if (err) {
-            console.log('err', err);
             return next(err);
         };
         if (!user) res.status(401).send(info.message);

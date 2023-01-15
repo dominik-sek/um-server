@@ -84,20 +84,21 @@ model faculty {
 model grade {
   gradebook_id Int
   course_id    Int
-  entry_time   DateTime  @id(map: "grade_pk") @db.Timestamp(6)
-  grade        Int
+  entry_time   DateTime  @db.Timestamp(6)
+  grade        Float
+  grade_Id     Int       @id(map: "grade_pk") @default(autoincrement())
   course       course    @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "grade_course_id_fk")
   gradebook    gradebook @relation(fields: [gradebook_id], references: [gradebook_id], onDelete: NoAction, onUpdate: NoAction, map: "grade_gradebook_gradebook_id_fk")
 }
 
 model gradebook {
-  person_id           Int?
+  person_id           Int                 @unique
   gradebook_id        Int                  @id(map: "gradebook_pk") @default(0)
   semester            String               @db.Char(1)
   course_students     course_students[]
   department_students department_students?
   grade               grade[]
-  person              person?              @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gradebook_person_id_fk")
+  person              person              @relation(fields: [person_id], references: [id],  map: "gradebook_person_id_fk")
 }
 
 model library_access {
@@ -129,7 +130,7 @@ model person {
   contact                contact?
   course                 course[]
   faculty                faculty[]
-  gradebook              gradebook[]
+  gradebook              gradebook?
   library_access         library_access?
   payments               payments[]
   role_person_roleTorole role            @relation("person_roleTorole", fields: [role], references: [name], onDelete: Cascade, onUpdate: NoAction, map: "person_role_name_fk")

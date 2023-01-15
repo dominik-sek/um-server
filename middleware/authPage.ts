@@ -26,7 +26,6 @@ export const authRole = (role: UserRole | UserRole[]) => {
 
 export const authRoleOrPerson = (role: UserRole | UserRole[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.user);
 
     if (!req.user) {
       res.status(401).send('Unauthorized');
