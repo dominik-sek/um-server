@@ -38,7 +38,7 @@ router.get('/student/:gradebook_id', authRoleOrPerson([UserRole.ADMIN, UserRole.
   }
 
 });
-router.get('/teacher/', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
+router.get('/teacher', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
   
     try {
       const result = await prisma.course.findMany({
