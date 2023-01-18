@@ -116,12 +116,16 @@ router.get('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
   }
 
 });
+
 router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
   try {
     const newPerson = await prisma.person.create({
       data: {
-        ...req.body,
-
+        first_name: req.body.first_name,
+        last_name: req.body.last_name,
+        pesel: Number(req.body.pesel),
+        role: req.body.role,
+        birth_date: new Date(new Date(req.body.birth_date).toISOString().slice(0, 19).replace('T', ' ') + '.000000'),
         address: {
           create: {
             ...req.body.address
@@ -129,7 +133,8 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
         },
         contact: {
           create: {
-            ...req.body.contact
+            email: req.body.contact.email,
+            phone_number: Number(req.body.contact.phone_number),
           }
         },
         personal: {
@@ -139,7 +144,7 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
         },
         library_access: {
           create: {
-            ...req.body.library_access as library_access || undefined
+            has_access: '0'
           }
         }
       },
@@ -153,13 +158,40 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
         address: true,
         contact: true,
         personal: true,
-        library_access: true,
         gradebook: true,
       },
     });
-
+    if (req.body.role === UserRole.STUDENT) {
+      console.log('creating dept students, courses students')
+      
+      await prisma.department_students.create({
+        data: {
+          department_id: Number(req.body.department_id),
+          gradebook_id: result!.gradebook!.gradebook_id,
+        }
+      });
+      const courses = await prisma.course.findMany({
+        where: {
+          department: Number(req.body.department_id)
+        }
+      })
+      console.log(courses)
+      
+      for (let i = 0; i < courses.length; i++) {
+        await prisma.course_students.create({
+          data: {
+            course_id: courses[i].id,
+            gradebook_id: result!.gradebook!.gradebook_id,
+          }
+        });
+      }
+    
+    }
+    
     res.status(201).json(result);
+
   } catch (err: any) {
+    console.log(err);
     res.status(500).json({ error: err.message });
   }
 
@@ -219,29 +251,46 @@ router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
         id: Number(req.params.id),
       },
       data: {
-        ...req.body,
+        first_name: req.body.first_name || undefined,
+        last_name: req.body.last_name || undefined,
+        pesel: Number(req.body.pesel) || undefined,
+        role: req.body.role || undefined,
+        birth_date: new Date(new Date(req.body.birth_date).toISOString().slice(0, 19).replace('T', ' ') + '.000000') || undefined,
+        gender: req.body.gender || undefined,
+        title: req.body.title || undefined,
 
         address: {
           update: {
-            ...req.body.address as address || undefined
+            city: req.body.address.city || undefined,
+            street: req.body.address.street || undefined,
+            country: req.body.address.country || undefined,
+            postal_code: req.body.address.postal_code || undefined,
+            state: req.body.address.state || undefined,
           }
         },
         contact: {
           update: {
-            ...req.body.contact as contact || undefined
+            email: req.body.contact.email || undefined,
+            phone_number: Number(req.body.contact.phone_number) || undefined,
           }
         },
         personal: {
           update: {
-            ...req.body.personal as personal || undefined
+            disabled: req.body.personal.disabled || undefined,
+            married: req.body.personal.married || undefined,
           }
         },
-        library_access: req.body.library_access as library_access || undefined
+        library_access: {
+          update: {
+            has_access: req.body.library_access.has_access || undefined,
+          }
+        }
       },
 
     });
     res.status(200).send(result);
   } catch (err: any) {
+    console.log(err);
     res.status(500).json({ error: err.message });
   }
 
@@ -258,6 +307,7 @@ router.delete('/:id', authRole(UserRole.ADMIN), async (req, res) => {
     res.status(204).send(result);
 
   } catch (err: any) {
+    console.log(err)
     res.status(500).json({ error: err.message });
   }
 });

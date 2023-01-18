@@ -37,7 +37,11 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
   try {
     const newDepartment = await prisma.department.create({
       data: {
-        ...req.body,
+        name: req.body.name,
+        faculty_id: Number(req.body.faculty_id),
+        degree: req.body.degree,
+        length: req.body.length,
+        study_type: req.body.study_type,
       }
     });
     res.status(201).send(newDepartment);
@@ -61,7 +65,6 @@ router.put('/:id', authRole(UserRole.ADMIN), async (req, res) => {
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
-
 });
 
 router.delete('/:id', authRole(UserRole.ADMIN), async (req, res) => {

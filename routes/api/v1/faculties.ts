@@ -44,15 +44,12 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
       data: {
         name: req.body.name,
         person_id: Number(req.body.person_id),
-      },
-      include: {
-        department: true,
-        person: true,
-      },
+      }
     });
     res.status(201).send(newFaculty);
   }
   catch (err: any) {
+    console.log(err)
     res.status(500).json({ error: err.message });
   }
 });
@@ -82,11 +79,7 @@ router.delete('/:id', authRole(UserRole.ADMIN), async (req, res) => {
     const deletedFaculty = await prisma.faculty.delete({
       where: {
         id: Number(req.params.id),
-      },
-      include: {
-        department: true,
-        person: true,
-      },
+      }
     });
     res.status(204).send(deletedFaculty);
   }
