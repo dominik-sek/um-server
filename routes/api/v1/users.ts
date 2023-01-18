@@ -6,7 +6,6 @@ import { address, contact, library_access, person, personal } from '@prisma/clie
 
 const router = Router();
 router.get('/', authRole(UserRole.ADMIN), async (req, res) => {
-
   try {
     const result:person[] = await prisma.person.findMany({
       include: {
@@ -116,7 +115,6 @@ router.get('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
   }
 
 });
-
 router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
   try {
     const newPerson = await prisma.person.create({
@@ -161,9 +159,7 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
         gradebook: true,
       },
     });
-    if (req.body.role === UserRole.STUDENT) {
-      console.log('creating dept students, courses students')
-      
+    if (req.body.role === UserRole.STUDENT) {      
       await prisma.department_students.create({
         data: {
           department_id: Number(req.body.department_id),
@@ -175,7 +171,6 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
           department: Number(req.body.department_id)
         }
       })
-      console.log(courses)
       
       for (let i = 0; i < courses.length; i++) {
         await prisma.course_students.create({
@@ -245,7 +240,7 @@ router.put('/profile/background', authRoleOrPerson([UserRole.ADMIN, UserRole.TEA
 });
 router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
   try {
-
+    console.log(req.body)
     const result = await prisma.person.update({
       where: {
         id: Number(req.params.id),
@@ -261,28 +256,28 @@ router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
 
         address: {
           update: {
-            city: req.body.address.city || undefined,
-            street: req.body.address.street || undefined,
-            country: req.body.address.country || undefined,
-            postal_code: req.body.address.postal_code || undefined,
-            state: req.body.address.state || undefined,
+            city: req.body.address?.city || undefined,
+            street: req.body.address?.street || undefined,
+            country: req.body.address?.country || undefined,
+            postal_code: req.body.address?.postal_code || undefined,
+            state: req.body.address?.state || undefined,
           }
         },
         contact: {
           update: {
-            email: req.body.contact.email || undefined,
-            phone_number: Number(req.body.contact.phone_number) || undefined,
+            email: req.body.contact?.email || undefined,
+            phone_number: Number(req.body.contact?.phone_number) || undefined,
           }
         },
         personal: {
           update: {
-            disabled: req.body.personal.disabled || undefined,
-            married: req.body.personal.married || undefined,
+            disabled: req.body.personal?.disabled || undefined,
+            married: req.body.personal?.married || undefined,
           }
         },
         library_access: {
           update: {
-            has_access: req.body.library_access.has_access || undefined,
+            has_access: req.body.library_access?.has_access || undefined,
           }
         }
       },

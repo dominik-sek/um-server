@@ -1,104 +1,84 @@
-import app from '../../app';
 import request from 'supertest';
-import { person } from '@prisma/client';
+import app from '../../app';
 
-let cookie = '';
-describe("Test the login path", () => {
+const validLogin = {
+  username: "baltazaradministrator3",
+  password: "123321321"
+};
+const invalidLogin = {
+  username: 'invalid',
+  password: 'invalid'
+}
+describe('API Routes', () => {
 
-  it("should respond with 401 given wrong credentials", done => {
-    request(app)
-      .post("/api/v1/login")
-      .send({
-        login: "123123312",
-        password: "adsasd123sda"
-      })
-      .then(response => {
-        expect(response.statusCode).toBe(401);
-        done();
-      });
+  describe('GET /api/v1/', () => {
+    it('responds with 200 OK', async () => {
+      const response = await request(app).get('/api/v1/');
+      expect(response.status).toBe(200);
+      expect(response.text).toBe('OK');
+    });
   });
 
-  it("should respond with 401 given no credentials", done => {
-    request(app)
-      .post("/api/v1/login")
-      .send({
-        login: "",
-        password: ""
-      })
-      .then(response => {
-        expect(response.statusCode).toBe(401);
-        done();
-      });
+  describe('GET /api/v1/cloud-signature', () => {
+    it('responds with signature and timestamp', async () => {
+      const login = await request(app)
+      .post('/api/v1/login')
+      .send(validLogin);
+      const response = await request(app).get('/api/v1/cloud-signature')
+      .set('Cookie', login.header['set-cookie']);
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('signature');
+      expect(response.body).toHaveProperty('timestamp');
+    });
   });
 
-  it("should repond with 200 and body with role property given correct credentials", done => {
-    request(app)
-      .post("/api/v1/login")
-      .send({ username: "baltazaradministrator3", password: "123321321" })
-      .then(response => {
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toMatchObject<person>;
-        cookie = response.headers['set-cookie'];
-        done();
-      });
+  describe('POST /api/v1/login', () => {
+    it('responds with 401 Unauthorized when login fails', async () => {
+      const response = await request(app)
+        .post('/api/v1/login')
+        .send(invalidLogin);
+      expect(response.status).toBe(401);
+      expect(response.text).toBe('No user found');
+    });
+
+    it('responds with user when login succeeds', async () => {
+      const response = await request(app)
+        .post('/api/v1/login')
+        .send(validLogin);
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('id');
+      expect(response.body).toHaveProperty('role');
+    });
   });
 
+  describe('GET /api/v1/check-auth', () => {
+    it('responds with 401 Unauthorized when not logged in', async () => {
+      const response = await request(app).get('/api/v1/check-auth');
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({ role: null, auth: false });
+    });
 
-});
-
-describe("Test checkauth path", () => {
-  it("should respond with 401 returning body containing role and auth status given the session is not active", done => {
-    request(app)
-      .get("/api/v1/check-auth")
-      .then(response => {
-        expect(response.statusCode).toBe(401);
-        expect(response.body).toEqual(
-          expect.objectContaining({
-            role: null,
-            auth: false
-          })
-        );
-        done();
-      });
+    it('responds with user role and auth status when logged in', async () => {
+      const loginResponse = await request(app)
+        .post('/api/v1/login')
+        .send(validLogin);
+      const authResponse = await request(app)
+        .get('/api/v1/check-auth')
+        .set('Cookie', loginResponse.header['set-cookie']);
+      expect(authResponse.status).toBe(200);
+      expect(authResponse.body).toHaveProperty('role');
+      expect(authResponse.body).toHaveProperty('auth');
+    });
   });
 
-  it("should respond with 200 returning containing role and auth status given the session is active", done => {
-    request(app)
-      .get("/api/v1/check-auth")
-      .set('Cookie', cookie)
-      .then(response => {
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toEqual(
-          expect.objectContaining({
-            role: expect.any(String),
-            auth: expect.any(Boolean)
-          })
-        );
-        done();
-      });
-
-  });
-
-});
-
-describe("test logout path", () => {
-
-  it("should respond with 200 with session active", done => {
-    request(app)
-      .delete("/api/v1/logout")
-      .set('Cookie', cookie)
-      .then(response => {
-        expect(response.statusCode).toBe(200);
-        done();
-      });
-  });
-
-  it("should respond with 200 without session active", done => {
-    request(app)
-      .delete("/api/v1/logout")
-      .then(response => {
-        expect(response.statusCode).toBe(200);
-        done();
-      });
+  it('responds with 200 OK', async () => {
+    const loginResponse = await request(app)
+      .post('/api/v1/login')
+      .send(validLogin);
+    const logoutResponse = await request(app)
+      .delete('/api/v1/logout')
+      .set('Cookie', loginResponse.header['set-cookie']);
+    expect(logoutResponse.status).toBe(200);
+    expect(logoutResponse.body).toEqual({ message: 'Logged out' });
   });
 });

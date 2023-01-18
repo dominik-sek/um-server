@@ -114,36 +114,7 @@ router.get('/student/:gradebook_id/course/:course_id', authRoleOrPerson([UserRol
       res.status(500).json({ error: err.message });
     }
 });
-// router.put('/student/:gradebook_id/course/:course_id', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
-//   try {
-//     const findGrade = await prisma.grade.findFirst({
-//       where: {
-//         gradebook_id: Number(req.params.gradebook_id),
-//         course_id: Number(req.params.course_id),
-//       },
-//       include: {
-//         gradebook: true,
-//       }
-//     });
 
-//     if (findGrade) {
-//       const updatedGrade = await prisma.grade.update({
-//         where: {
-//           entry_time: findGrade.entry_time,
-//         },
-//         data: {
-//           grade: req.body.grade,
-//           entry_time: new Date(timestamp),
-//         },
-//       });
-//       res.status(200).send(updatedGrade);
-//     } else {
-//       res.status(404).send('Grade not found');
-//     }
-//   } catch (err: any) {
-//     res.status(500).json({ error: err.message });
-//   }
-// });
 
 router.delete('/student/:grade_id', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
 

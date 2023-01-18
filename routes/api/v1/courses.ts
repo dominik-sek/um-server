@@ -47,7 +47,6 @@ router.get('/student/:gradebook_id', authRoleOrPerson([UserRole.ADMIN, UserRole.
   }
   
 })
-
 //get students for each course by teacher id
 router.get('/students', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
   try {
@@ -77,7 +76,6 @@ router.get('/students', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (req
     res.status(500).json({ error: err.message });
   }
 });
-
 
 router.get('/:id', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
   try {
@@ -148,7 +146,6 @@ router.get('/:id/students', authRole([UserRole.ADMIN, UserRole.TEACHER]), async 
     res.status(500).json({ error: err.message });
   }
 });
-
 
 //update course, add a new teacher as the course teacher
 router.put('/:id/teacher', authRole(UserRole.ADMIN), async (req, res) => {
