@@ -8,12 +8,14 @@ datasource db {
 }
 
 model account {
-  username       String          @db.VarChar(64)
-  password       String          @db.VarChar(64)
-  person_id      Int             @id(map: "account_pk")
-  last_login     DateTime        @db.Timestamp(6)
-  person         person          @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "account_person_id_fk")
-  account_images account_images?
+  username            String          @db.VarChar(64)
+  password            String          @db.VarChar(64)
+  person_id           Int             @id(map: "account_pk")
+  last_login          DateTime        @db.Timestamp(6)
+  reset_token         String?         @db.VarChar
+  reset_token_expires DateTime?       @db.Timestamp(6)
+  person              person          @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "account_person_id_fk")
+  account_images      account_images?
 }
 
 model account_images {
@@ -41,17 +43,17 @@ model contact {
 }
 
 model course {
-  id                                       Int               @id(map: "course_pk") @default(autoincrement())
-  name                                     String            @db.VarChar(64)
-  type                                     String            @db.VarChar(64)
-  ects                                     Int
-  person_id                                Int
-  semester                                 String            @db.Char(2)
-  department                               Int
-  department_course                        department        @relation("course_departmentTodepartment", fields: [department], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_department_id_fk")
-  person                                   person            @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_person_id_fk")
-  course_students                          course_students[]
-  grade                                    grade[]
+  id                Int               @id(map: "course_pk") @default(autoincrement())
+  name              String            @db.VarChar(64)
+  type              String            @db.VarChar(64)
+  ects              Int
+  person_id         Int
+  semester          String            @db.Char(2)
+  department        Int
+  department_course department        @relation("course_departmentTodepartment", fields: [department], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_department_id_fk")
+  person            person            @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_person_id_fk")
+  course_students   course_students[]
+  grade             grade[]
 }
 
 model course_students {

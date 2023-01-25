@@ -84,6 +84,7 @@ router.delete('/:id', authRole(UserRole.ADMIN), async (req, res) => {
     res.status(204).send(deletedFaculty);
   }
   catch (err: any) {
+    console.log(err)
     res.status(500).json({ error: err.message });
   }
 

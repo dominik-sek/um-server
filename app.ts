@@ -44,18 +44,7 @@ app.use('/api/v1', apiV1);
 app.get('/api/v1/', (req, res, next) => {
     res.status(200).send("OK");
 });
-app.get('/api/v1/cloud-signature', authRoleOrPerson([UserRole.ADMIN, UserRole.STUDENT, UserRole.TEACHER]), (req, res, next) => {
-    const timestamp = Math.round((new Date()).getTime() / 1000);
-    // @ts-ignore there are no types avaliable for cloudinary library and im too lazy to write them
-    const signature = cloudinary.utils.api_sign_request({
-        timestamp: timestamp
-    }, process.env.CLOUDINARY_SECRET!);
-    res.status(200).send({
-        signature: signature,
-        timestamp: timestamp
-    });
 
-});
 
 app.post('/api/v1/login', (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
@@ -88,7 +77,6 @@ app.post('/api/v1/login', (req, res, next) => {
     })(req, res, next);
 });
 
-
 app.get('/api/v1/check-auth', async (req, res) => {
     if (!req.user) {
         res.status(401).send({
@@ -110,6 +98,18 @@ app.get('/api/v1/check-auth', async (req, res) => {
     }
 });
 
+app.get('/api/v1/cloud-signature', authRoleOrPerson([UserRole.ADMIN, UserRole.STUDENT, UserRole.TEACHER]), (req, res, next) => {
+    const timestamp = Math.round((new Date()).getTime() / 1000);
+    // @ts-ignore there are no types avaliable for cloudinary library and im too lazy to write them
+    const signature = cloudinary.utils.api_sign_request({
+        timestamp: timestamp
+    }, process.env.CLOUDINARY_SECRET!);
+    res.status(200).send({
+        signature: signature,
+        timestamp: timestamp
+    });
+
+});
 app.delete('/api/v1/logout', (req, res, next) => {
     req.logout(function (err) {
         if (err) {
@@ -118,7 +118,67 @@ app.delete('/api/v1/logout', (req, res, next) => {
         res.status(200).json({ message: 'Logged out' });
     });
 });
+app.post('/api/v1/forgot-password', async (req, res, next) => {
+    const { email } = req.body;
+    const findPersonByEmail = await prisma.person.findFirst({
+        where: {
+            contact: {
+                email: email
+            }
+        }
+    });
+    if (!findPersonByEmail) {
+        res.status(404).send({ message: 'User not found' });
+    } else {
+        const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ') + '.000000';
+        await prisma.account.update({
+            where: {
+                person_id: findPersonByEmail.id
+            },
+            data: {
+                reset_token: token,
+                reset_token_expires: new Date(timestamp + 1000 * 60 * 60 * 1 )// 1 hour
+            }
+        });
+        res.status(200).send({ message: 'Reset token generated' });
+    }
+});
 
-
+app.post('/api/v1/reset-password', async (req, res, next) => {
+    const { token, password } = req.body;
+    if (!token || !password) {
+        res.status(400).send({ message: 'Bad request' })
+    } else {
+        const findPersonByToken = await prisma.account.findFirst({
+            where: {
+                reset_token: token
+            }
+        });
+        if (!findPersonByToken) {
+            res.status(404).send({ message: 'User not found' });
+        } else {
+            const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ') + '.000000';
+            //if token is expired
+            if (findPersonByToken.reset_token_expires! < new Date(timestamp)) {
+                res.status(401).send({ message: 'Token expired' });
+            } else {
+                await prisma.account.update({
+                    where: {
+                        person_id: findPersonByToken.person_id
+                    },
+                    data: {
+                        password: password,
+                        reset_token: null,
+                        reset_token_expires: null,
+                    }
+                });
+                res.status(200).send({ message: 'Password changed' });
+            }
+        }
+    }
+    
+});
 
 export default app;
+

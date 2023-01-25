@@ -24,6 +24,8 @@ describe("Authorization middleware", () => {
       username: "",
       password: "",
       last_login: new Date(),
+      reset_token: "",
+      reset_token_expires: new Date(),
     };
     await authRole(UserRole.ADMIN)(mockRequest, mockResponse, mockNext);
     expect(mockNext).toBeCalled();
@@ -35,6 +37,8 @@ describe("Authorization middleware", () => {
       username: "",
       password: "",
       last_login: new Date(),
+      reset_token: "",
+      reset_token_expires: new Date(),
     };
     await authRole(UserRole.ADMIN)(mockRequest, mockResponse, mockNext);
     expect(mockResponse.status).toBeCalledWith(403);
