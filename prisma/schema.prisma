@@ -71,6 +71,7 @@ model department {
   study_type                           String                @db.VarChar(32)
   faculty_id                           Int
   degree                               String                @db.VarChar(32)
+  ects                                 Int?
   course_course_departmentTodepartment course[]              @relation("course_departmentTodepartment")
   faculty                              faculty               @relation(fields: [faculty_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "department_faculty_id_fk")
   department_students                  department_students[]
@@ -157,4 +158,10 @@ model personal {
 model role {
   name                     String   @id(map: "role_pk") @db.VarChar(12)
   person_person_roleTorole person[] @relation("person_roleTorole")
+}
+
+model printouts {
+  id          Int     @id(map: "printouts_pk") @default(autoincrement())
+  url         String? @db.VarChar
+  description String? @db.VarChar
 }

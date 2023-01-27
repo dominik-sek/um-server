@@ -105,6 +105,27 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
         type: req.body.type,
       }
     });
+    //find all department students mathing the course semester
+    const departmentStudents = await prisma.department_students.findMany({
+      where: {
+        department_id: Number(req.body.department_id),
+        AND: {
+          gradebook: {
+            semester: req.body.semester,
+          }
+        }
+      }
+    });
+    // add each of those to course_students
+    departmentStudents.forEach(async (student: any) => {
+      await prisma.course_students.create({
+        data: {
+          course_id: newCourse.id,
+          gradebook_id: student.gradebook_id,
+        }
+      });
+    });
+
     res.status(201).send(newCourse);
   } catch (err: any) {
     console.log(err)

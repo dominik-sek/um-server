@@ -26,6 +26,7 @@ router.get('/', authRole(UserRole.ADMIN), async (req, res) => {
         },
         account: {
           select: {
+            username: true,
             account_images: {
               select: {
                 avatar_url: true,
@@ -124,20 +125,27 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
         pesel: Number(req.body.pesel),
         role: req.body.role,
         birth_date: new Date(new Date(req.body.birth_date).toISOString().slice(0, 19).replace('T', ' ') + '.000000'),
+        gender: req.body.gender,
+        
         address: {
           create: {
-            ...req.body.address
+            city: req.body.city,
+            street: req.body.street,
+            country: req.body.country,
+            postal_code: req.body.postal_code,
+            state: req.body.state,
           }
         },
         contact: {
           create: {
-            email: req.body.contact.email,
-            phone_number: Number(req.body.contact.phone_number),
+            email: req.body.email,
+            phone_number: Number(req.body.phone_number),
           }
         },
         personal: {
           create: {
-            ...req.body.personal
+            disabled: req.body.disabled,
+            married: req.body.married,
           }
         },
         library_access: {
@@ -168,17 +176,20 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
       });
       const courses = await prisma.course.findMany({
         where: {
-          department: Number(req.body.department_id)
+          department: Number(req.body.department_id),
+          semester:result!.gradebook!.semester,
         }
       })
       
-      for (let i = 0; i < courses.length; i++) {
-        await prisma.course_students.create({
-          data: {
-            course_id: courses[i].id,
-            gradebook_id: result!.gradebook!.gradebook_id,
-          }
-        });
+      if (courses) {
+        for (let i = 0; i < courses.length; i++) {
+          await prisma.course_students.create({
+            data: {
+              course_id: courses[i].id,
+              gradebook_id: result!.gradebook!.gradebook_id,
+            }
+          });
+        }
       }
     
     }
