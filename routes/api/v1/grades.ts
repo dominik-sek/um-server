@@ -91,6 +91,22 @@ router.post('/', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) 
     res.status(500).json({ error: err.message });
   }
 });
+router.put('/:grade_id', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
+  try {
+    const updatedGrade = await prisma.grade.update({
+      where: {
+        grade_Id: Number(req.params.grade_id),
+      },
+      data: {
+        grade: parseFloat(req.body.grade),
+        entry_time: new Date(timestamp)
+      }
+    });
+    res.status(200).send(updatedGrade);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.get('/student/:gradebook_id/course/:course_id', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
   
