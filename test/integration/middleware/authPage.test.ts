@@ -5,6 +5,10 @@ import { authRole, authRoleOrPerson } from '../../../middleware/authPage';
 import { UserRole } from '../../../enums/userRole';
 
 describe("Authorization middleware", () => {
+<<<<<<< HEAD
+=======
+  
+>>>>>>> 7d2ece4aa88679b20f078f4693dbe7d756dc1436
   let mockRequest: Request;
   let mockResponse: Response;
   let mockNext: NextFunction;

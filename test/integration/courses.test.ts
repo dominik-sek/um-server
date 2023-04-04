@@ -65,6 +65,7 @@ describe("GET api/v1/courses", () => {
   
 });
 
+<<<<<<< HEAD
 describe("POST api/v1/courses", () => {
   let newCourseId = 0;
   it("should add a course and respond with 201 and its body", async () => {
@@ -129,4 +130,6 @@ describe('DELETE api/v1/courses', () => {
 
 });
 
+=======
+>>>>>>> 7d2ece4aa88679b20f078f4693dbe7d756dc1436
 
