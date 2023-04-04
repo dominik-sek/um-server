@@ -50,8 +50,8 @@ model course {
   person_id         Int
   semester          String            @db.Char(2)
   department        Int
-  department_course department        @relation("course_departmentTodepartment", fields: [department], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_department_id_fk")
-  person            person            @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_person_id_fk")
+  department_course department        @relation("course_departmentTodepartment", fields: [department], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "course_department_id_fk")
+  person            person            @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "course_person_id_fk")
   course_students   course_students[]
   grade             grade[]
 }
@@ -73,7 +73,7 @@ model department {
   degree                               String                @db.VarChar(32)
   ects                                 Int?
   course_course_departmentTodepartment course[]              @relation("course_departmentTodepartment")
-  faculty                              faculty               @relation(fields: [faculty_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "department_faculty_id_fk")
+  faculty                              faculty               @relation(fields: [faculty_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "department_faculty_id_fk")
   department_students                  department_students[]
 }
 
@@ -89,7 +89,7 @@ model faculty {
   name       String       @db.VarChar(64)
   person_id  Int
   department department[]
-  person     person       @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "faculty_person_id_fk")
+  person     person       @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "faculty_person_id_fk")
 }
 
 model grade {
@@ -124,7 +124,7 @@ model payments {
   type         String   @db.VarChar(128)
   amount       Int      @default(0)
   person_id    Int
-  person       person   @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "payments_person_id_fk")
+  person       person   @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payments_person_id_fk")
 }
 
 model person {

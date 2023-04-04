@@ -34,6 +34,17 @@ router.post('/', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) 
     res.status(500).json({ error: err.message });
   }
 });
-
+router.delete('/:id', authRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
+    try {
+        const result = await prisma.printouts.delete({
+        where: {
+            id: Number(req.params.id),
+        }
+        });
+        res.status(200).send(result);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 export default router;

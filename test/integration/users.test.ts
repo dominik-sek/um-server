@@ -7,36 +7,37 @@ let studentAccount = {
   password: '123123123',
 };
 let adminAccount = {
-  username: 'baltazaradministrator3',
-  password: '123321321',
+  username: 'admin',
+  password: 'admin',
 };
+
 let mockPerson = {
-  first_name: "Andrzej",
-  last_name: "Doktor",
-  title: "dr hab mgr inż",
-  birth_date: '1990-01-19',
-  pesel: 675743234,
+  first_name: "Jan",
+  last_name: "Nowak",
+  title: "mgr inż.",
+  birth_date: '1995-11-18',
+  pesel: 95111805516,
   gender: "M",
-  role: "student",
+  role: "teacher",
   address: {
-    city: "Warszawa",
-    state: "Mazowieckie",
+    city: "Brzesko",
+    state: "Małopolskie",
     country: "PL",
-    postal_code: "33-333",
-    street: "Świętokrzyska 31"
+    postal_code: "32-800",
+    street: "Warszawska 31"
   },
   contact: {
-    email: "dean@studia.edu.pl",
-    phone_number: 333222111
+    email: "email@studia.edu.pl",
+    phone_number: 123456789
   },
   personal: {
     disabled: "0",
     married: "1"
   },
-  department_id: "12"
 };
 
 let mockPutPerson = mockPerson;
+
 mockPutPerson.first_name = "New name";
 describe("Users routes with no/limited permission", () => {
   describe("GET /api/v1/users no account", () => {
@@ -76,20 +77,20 @@ describe("Users routes with no/limited permission", () => {
   });
 });
 
-let newPersonId  = 0;
+let newPersonId = 0;
 let gradebook_id = 0;
 describe("Users routes with admin auth", () => {
   describe("POST /api/v1/users ", () => {
 
     it('should return 201 and return body with newly added person', async () => {
       const login = await request(app).post('/api/v1/login').send(adminAccount);
-      const response = await request(app).post('/api/v1/users').set('Cookie', login.headers['set-cookie']).send(mockPerson)
+      const response = await request(app).post('/api/v1/users').set('Cookie', login.headers['set-cookie']).send(mockPerson);
       expect(response.statusCode).toBe(201);
       expect(response.body).toMatchObject<person>;
       newPersonId = response.body.id;
       gradebook_id = response.body.gradebook.gradebook_id;
     });
-    
+
   });
   describe("PUT /api/v1/users", () => {
     it("should return 200 and return body with updated person with admin account", async () => {
@@ -114,12 +115,12 @@ describe("Users routes with admin auth", () => {
 
   describe('DELETE /api/v1/users', () => {
     it("should return 201 and delete user", async () => {
-    const login = await request(app).post('/api/v1/login').send(adminAccount);
-    const response = await request(app)
-      .delete(`/api/v1/users/${newPersonId}`)
-      .set('Cookie', login.headers['set-cookie']);
-    expect(response.statusCode).toBe(204);
-    })
+      const login = await request(app).post('/api/v1/login').send(adminAccount);
+      const response = await request(app)
+        .delete(`/api/v1/users/${newPersonId}`)
+        .set('Cookie', login.headers['set-cookie']);
+      expect(response.statusCode).toBe(204);
+    });
   });
 
 });
