@@ -1,3 +1,5 @@
+import {createClient} from "redis";
+
 BigInt.prototype.toJSON = function () {
     return this.toString();
 };
@@ -15,8 +17,8 @@ import { UserRole } from './enums/userRole';
 import cloudinary from 'cloudinary';
 const SibApiV3Sdk = require('sib-api-v3-typescript');
 const bcrypt = require('bcrypt');
-import redis from 'redis';
-import RedisStore from "connect-redis";
+import RedisStore from "connect-redis"
+
 
 const unixTimestamp = Math.round(new Date().getTime() / 1000);
 const timestamp_pg = new Date(new Date().toISOString().slice(0, 19).replace('T', ' ') + '.000000')
@@ -39,14 +41,17 @@ app.use(cors({
     credentials: true
 }));
 const PORT = 4000 || process.env.PORT;
+let redisClient = createClient({
+    url: process.env.REDIS_URL_EXTERNAL
+})
+let redisStore = new RedisStore({
+    client: redisClient,
+    prefix: "myapp:",
+})
 
 app.use(flash());
 app.use(session({
-    store: new RedisStore({
-        client: redis.createClient({
-            url: process.env.REDIS_URL_EXTERNAL,
-        }),
-    }),
+    store: redisStore,
     secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
