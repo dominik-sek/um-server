@@ -1,4 +1,6 @@
 //@ts-ignore
+import RedisStore from "connect-redis";
+
 BigInt.prototype.toJSON = function () { return this.toString(); };
 
 import express from 'express';
@@ -14,6 +16,7 @@ import { UserRole } from './enums/userRole';
 import cloudinary from 'cloudinary';
 const SibApiV3Sdk = require('sib-api-v3-typescript');
 const bcrypt = require('bcrypt');
+import redis from 'redis';
 
 const unixTimestamp = Math.round(new Date().getTime() / 1000);
 const timestamp_pg = new Date(new Date().toISOString().slice(0, 19).replace('T', ' ') + '.000000')
@@ -21,11 +24,9 @@ const timestamp_pg = new Date(new Date().toISOString().slice(0, 19).replace('T',
 require('dotenv').config();
 const app = express();
 
-
 let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 let apiKey = apiInstance.authentications['apiKey'];
 apiKey.apiKey = process.env.SENDINBLUE_API!;
-
 
 const sender = {
     email: 'wu.pwdreset@gmail.com',
@@ -34,14 +35,18 @@ const sender = {
 
 app.use(express.json());
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: 'https://um.dominiksek.com',
     credentials: true
 }));
 const PORT = 4000 || process.env.PORT;
 
 app.use(flash());
 app.use(session({
-    // store: new session.MemoryStore(), todo: add redis
+    store: new RedisStore({
+        client: redis.createClient({
+            url: process.env.REDIS_URL_EXTERNAL,
+        }),
+    }),
     secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,

@@ -2,6 +2,7 @@
   "scripts": {
     "server": "npx ts-node server.ts",
     "server-respawn": "npx ts-node-dev --respawn --transpile-only server.ts",
+    "build": "npx tsc",
     "prisma-generate": "npx prisma generate",
     "prisma-pull": "npx prisma db pull",
     "migrate-dev": "npx prisma migrate dev --name init",
@@ -52,6 +53,7 @@
     "pdfkit": "^0.13.0",
     "pdfkit-table": "^0.1.99",
     "pdfmake": "^0.2.7",
+    "redis": "^4.6.5",
     "sib-api-v3-sdk": "^8.5.0",
     "sib-api-v3-typescript": "^2.2.2",
     "voilab-pdf-table": "^0.5.1"
