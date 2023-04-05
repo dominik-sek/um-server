@@ -48,12 +48,10 @@ const sender = {
 app.use(express.json());
 app.use(cors({
     origin: 'https://um.dominiksek.com',
+    methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
     credentials: true
 }));
 const PORT = 4000 || process.env.PORT;
-
-
-
 
 app.use(flash());
 app.use(session({
@@ -63,7 +61,7 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         maxAge: 3600000, // 1 hour
-        // sameSite: true,
+        sameSite: false,
         secure: true,
         httpOnly: true
     }
@@ -108,7 +106,6 @@ app.post('/api/v1/login', (req, res, next) => {
                 res.status(200).send(findPersonById);
             });
         }
-        console.log(req.sessionID)
     })(req, res, next);
 });
 

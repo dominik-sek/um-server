@@ -27,7 +27,6 @@ export const authRole = (role: UserRole | UserRole[]) => {
 export const authRoleOrPerson = (role: UserRole | UserRole[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
-      console.error('user not found');
       res.status(401).send('Unauthorized');
     } else {
       const findPerson = await prisma.person.findUnique({
