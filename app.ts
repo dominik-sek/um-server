@@ -18,8 +18,17 @@ import { UserRole } from './enums/userRole';
 import cloudinary from 'cloudinary';
 const SibApiV3Sdk = require('sib-api-v3-typescript');
 const bcrypt = require('bcrypt');
-import connectRedis from 'connect-redis';
-import redis from 'redis';
+
+import RedisStore from "connect-redis"
+import {createClient} from "redis"
+let redisClient = createClient({
+    url: process.env.REDIS_URL_EXTERNAL,
+})
+redisClient.connect().catch(console.error)
+let redisStore = new RedisStore({
+    client: redisClient,
+    // prefix: "myapp:",
+})
 
 const unixTimestamp = Math.round(new Date().getTime() / 1000);
 const timestamp_pg = new Date(new Date().toISOString().slice(0, 19).replace('T', ' ') + '.000000')
@@ -43,25 +52,20 @@ app.use(cors({
 }));
 const PORT = 4000 || process.env.PORT;
 
-const redisStore = connectRedis(session);
-const redisClient = redis.createClient({
-    url: process.env.REDIS_URL_EXTERNAL
-})
-const sessionStore = new redisStore({
-    client: redisClient,
-});
+
 
 
 app.use(flash());
 app.use(session({
-    store: sessionStore,
+    store: redisStore,
     secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
     cookie: {
         maxAge: 3600000, // 1 hour
         sameSite: true,
-        secure: false
+        secure: true,
+        httpOnly: true
     }
 }));
 initialize(passport);
