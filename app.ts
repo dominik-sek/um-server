@@ -63,11 +63,12 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         maxAge: 3600000, // 1 hour
-        sameSite: true,
+        // sameSite: true,
         secure: true,
         httpOnly: true
     }
 }));
+
 initialize(passport);
 app.use(passport.initialize());
 app.use(passport.session());
@@ -86,6 +87,7 @@ app.post('/api/v1/login', (req, res, next) => {
         };
         if (!user) res.status(401).send(info.message);
         else {
+
             req.logIn(user, async (err) => {
                 if (err) throw err;
 
@@ -106,6 +108,7 @@ app.post('/api/v1/login', (req, res, next) => {
                 res.status(200).send(findPersonById);
             });
         }
+        console.log(req.sessionID)
     })(req, res, next);
 });
 
