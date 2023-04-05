@@ -1,9 +1,10 @@
-import {createClient} from "redis";
+interface BigIntWithToJSON extends BigInt {
+    toJSON(): string;
+}
 
-BigInt.prototype.toJSON = function () {
+(BigInt.prototype as BigIntWithToJSON).toJSON = function () {
     return this.toString();
 };
-
 import express from 'express';
 import cors from 'cors';
 import flash from 'express-flash';
@@ -17,8 +18,8 @@ import { UserRole } from './enums/userRole';
 import cloudinary from 'cloudinary';
 const SibApiV3Sdk = require('sib-api-v3-typescript');
 const bcrypt = require('bcrypt');
-import RedisStore from "connect-redis"
-
+import connectRedis from 'connect-redis';
+import redis from 'redis';
 
 const unixTimestamp = Math.round(new Date().getTime() / 1000);
 const timestamp_pg = new Date(new Date().toISOString().slice(0, 19).replace('T', ' ') + '.000000')
@@ -41,22 +42,24 @@ app.use(cors({
     credentials: true
 }));
 const PORT = 4000 || process.env.PORT;
-let redisClient = createClient({
+
+const redisStore = connectRedis(session);
+const redisClient = redis.createClient({
     url: process.env.REDIS_URL_EXTERNAL
 })
-let redisStore = new RedisStore({
+const sessionStore = new redisStore({
     client: redisClient,
-    prefix: "myapp:",
-})
+});
+
 
 app.use(flash());
 app.use(session({
-    store: redisStore,
+    store: sessionStore,
     secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
     cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        maxAge: 3600000, // 1 hour
         sameSite: true,
         secure: false
     }
