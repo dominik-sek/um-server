@@ -1,7 +1,6 @@
-//@ts-ignore
-import RedisStore from "connect-redis";
-
-BigInt.prototype.toJSON = function () { return this.toString(); };
+BigInt.prototype.toJSON = function () {
+    return this.toString();
+};
 
 import express from 'express';
 import cors from 'cors';
@@ -17,6 +16,7 @@ import cloudinary from 'cloudinary';
 const SibApiV3Sdk = require('sib-api-v3-typescript');
 const bcrypt = require('bcrypt');
 import redis from 'redis';
+import RedisStore from "connect-redis";
 
 const unixTimestamp = Math.round(new Date().getTime() / 1000);
 const timestamp_pg = new Date(new Date().toISOString().slice(0, 19).replace('T', ' ') + '.000000')
