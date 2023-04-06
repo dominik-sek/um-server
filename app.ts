@@ -48,24 +48,26 @@ const sender = {
 app.use(express.json());
 app.use(cors({
     origin: 'https://um.dominiksek.com',
-    methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
+    // methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
     credentials: true
 }));
 const PORT = 4000 || process.env.PORT;
 
 app.use(flash());
 app.set("trust proxy", 1);
+let hour = 3600000;
+app.use(express.urlencoded({ extended: false }));
 app.use(session({
     store: redisStore,
     secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
     cookie: {
-        maxAge: 3600000, // 1 hour
-        sameSite: 'none',
-        secure: true,
+        maxAge: hour*2,
+        sameSite: true,
+        secure: false,
         httpOnly: true,
-        domain:'.dominiksek.com'
+        // domain:'.dominiksek.com'
     }
 }));
 
@@ -79,15 +81,13 @@ app.get('/api/v1/', (req, res, next) => {
     res.status(200).send("OK");
 });
 
-
 app.post('/api/v1/login', (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
         if (err) {
             return next(err);
-        };
+        }
         if (!user) res.status(401).send(info.message);
         else {
-
             req.logIn(user, async (err) => {
                 if (err) throw err;
 
