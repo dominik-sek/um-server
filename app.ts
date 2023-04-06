@@ -66,7 +66,7 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         maxAge: hour*2,
-        sameSite: "none",
+        sameSite: "strict",
         secure: true,
         domain:'.dominiksek.com'
     }
