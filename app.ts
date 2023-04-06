@@ -51,7 +51,6 @@ app.use(cors({
     methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
     credentials: true
 }));
-const PORT = 4000 || process.env.PORT;
 
 app.use(flash());
 let hour = 3600000;
