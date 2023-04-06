@@ -113,6 +113,7 @@ app.post('/api/v1/login', (req, res, next) => {
 });
 
 app.get('/api/v1/check-auth', async (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
     if (!req.user) {
         res.status(401).send({
             role: null,
