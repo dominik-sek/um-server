@@ -18,6 +18,7 @@ import { UserRole } from './enums/userRole';
 import cloudinary from 'cloudinary';
 const SibApiV3Sdk = require('sib-api-v3-typescript');
 const bcrypt = require('bcrypt');
+const cookieParser = require("cookie-parser");
 
 import RedisStore from "connect-redis"
 import {createClient} from "redis"
@@ -35,7 +36,7 @@ const timestamp_pg = new Date(new Date().toISOString().slice(0, 19).replace('T',
 
 require('dotenv').config();
 const app = express();
-
+app.use(cookieParser());
 let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 let apiKey = apiInstance.authentications['apiKey'];
 apiKey.apiKey = process.env.SENDINBLUE_API!;
