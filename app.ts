@@ -81,17 +81,16 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-//limit session to 1 per user
-app.use((req, res, next) => {
-    if (req.user) {
-        req.session!.destroy((err) => {
-            if (err) {
-                console.log(err);
-            }
-        });
-    }
-    next();
-});
+// app.use((req, res, next) => {
+//     if (req.user) {
+//         req.session!.destroy((err) => {
+//             if (err) {
+//                 console.log(err);
+//             }
+//         });
+//     }
+//     next();
+// });
 
 app.use('/api/v1', apiV1);
 
