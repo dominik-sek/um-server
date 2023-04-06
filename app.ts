@@ -82,7 +82,7 @@ app.get('/api/v1/', (req, res, next) => {
 });
 
 app.post('/api/v1/login', (req, res, next) => {
-    passport.authenticate('local', (err, user, info) => {
+    passport.authenticate('local', (err: any, user: Express.User, info: { message: any; }) => {
         if (err) {
             return next(err);
         }
