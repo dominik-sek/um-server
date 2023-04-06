@@ -68,7 +68,8 @@ app.use(session({
         maxAge: hour*2,
         sameSite: "none",
         secure: true,
-        domain:'um.dominiksek.com'
+        domain:'um.dominiksek.com',
+        httpOnly:false
     }
 }));
 
