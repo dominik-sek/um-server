@@ -110,6 +110,8 @@ app.post('/api/v1/login', (req, res, next) => {
                         last_login: timestamp_pg
                     }
                 });
+                req.session.cookie.maxAge = hour*2;
+                console.log(req.session.cookie);
                 res.status(200).send(findPersonById);
             });
         }
