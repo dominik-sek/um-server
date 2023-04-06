@@ -57,7 +57,7 @@ app.use(cors({
 }));
 
 app.use(flash());
-let hour = 3600000;
+
 app.use(express.urlencoded({ extended: false }));
 app.set("trust proxy", 1);
 app.use(session({
@@ -67,7 +67,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        maxAge: hour*2,
+        maxAge: 900000, // 15 minutes
         sameSite: "none",
         secure: true,
         httpOnly:true,
@@ -79,6 +79,19 @@ app.use(session({
 initialize(passport);
 app.use(passport.initialize());
 app.use(passport.session());
+
+
+//limit session to 1 per user
+app.use((req, res, next) => {
+    if (req.user) {
+        req.session!.destroy((err) => {
+            if (err) {
+                console.log(err);
+            }
+        });
+    }
+    next();
+});
 
 app.use('/api/v1', apiV1);
 
@@ -110,8 +123,8 @@ app.post('/api/v1/login', (req, res, next) => {
                         last_login: timestamp_pg
                     }
                 });
-                req.session.cookie.maxAge = hour*2;
-                console.log(req.session.cookie);
+                // req.session.cookie.maxAge = hour*2;
+                // console.log(req.session.cookie);
                 res.status(200).send(findPersonById);
             });
         }
