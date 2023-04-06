@@ -44,6 +44,7 @@ router.get('/', authRole(UserRole.ADMIN), async (req, res) => {
   }
 });
 router.get('/profile', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]), async (req, res) => {
+  console.log(res.cookie)
   try {
     const result = await prisma.person.findUnique({
       where: {
