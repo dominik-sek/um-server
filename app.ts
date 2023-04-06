@@ -48,7 +48,8 @@ const sender = {
 
 app.use(express.json());
 app.use(cors({
-    origin:'https://um.dominiksek.com',
+    // origin:'https://um.dominiksek.com',
+    origin:true,
     methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
     credentials: true
 }));
