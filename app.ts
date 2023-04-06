@@ -49,7 +49,7 @@ const sender = {
 app.use(express.json());
 app.use(cors({
     origin: 'https://um.dominiksek.com',
-    // methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
+    methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
     credentials: true
 }));
 const PORT = 4000 || process.env.PORT;
