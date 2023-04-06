@@ -22,6 +22,12 @@ const cookieParser = require("cookie-parser");
 
 import RedisStore from "connect-redis"
 import {createClient} from "redis"
+
+const sender = {
+    email: 'wu.pwdreset@gmail.com',
+    name: 'Wirtualna uczelnia',
+}
+
 let redisClient = createClient({
     url: process.env.REDIS_URL_EXTERNAL,
 })
@@ -41,10 +47,6 @@ let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 let apiKey = apiInstance.authentications['apiKey'];
 apiKey.apiKey = process.env.SENDINBLUE_API!;
 
-const sender = {
-    email: 'wu.pwdreset@gmail.com',
-    name: 'Wirtualna uczelnia',
-}
 
 app.use(express.json());
 app.use(cors({
@@ -68,8 +70,9 @@ app.use(session({
         maxAge: hour*2,
         sameSite: "none",
         secure: true,
-        domain:'um.dominiksek.com',
-        httpOnly:false
+        httpOnly:true,
+        path: "/",
+        domain: ".dominiksek.com"
     }
 }));
 
