@@ -54,20 +54,20 @@ app.use(cors({
 const PORT = 4000 || process.env.PORT;
 
 app.use(flash());
-app.set("trust proxy", 1);
 let hour = 3600000;
 app.use(express.urlencoded({ extended: false }));
+app.set("trust proxy", 1);
 app.use(session({
     store: redisStore,
+    proxy: true,
     secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
     cookie: {
         maxAge: hour*2,
-        sameSite: true,
-        secure: false,
-        httpOnly: true,
-        // domain:'.dominiksek.com'
+        sameSite: "none",
+        secure: true,
+        // domain:'dominiksek.com'
     }
 }));
 
