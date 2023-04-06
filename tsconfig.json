@@ -5,5 +5,7 @@
     "strict": true,
     "lib": ["esnext"],
     "esModuleInterop": true,
+    "target": "ESNext",
+    "module": "CommonJS"
   }
 }
