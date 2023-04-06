@@ -54,6 +54,7 @@ app.use(cors({
 const PORT = 4000 || process.env.PORT;
 
 app.use(flash());
+app.set("trust proxy", 1);
 app.use(session({
     store: redisStore,
     secret: process.env.SESSION_SECRET!,
@@ -61,7 +62,7 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         maxAge: 3600000, // 1 hour
-        sameSite: false,
+        sameSite: 'none',
         secure: true,
         httpOnly: true
     }
