@@ -3,6 +3,7 @@ import prisma from '../../../prisma';
 import { authRole, authRoleOrPerson } from '../../../middleware/authPage';
 import { UserRole } from '../../../enums/userRole';
 import { address, contact, library_access, person, personal } from '@prisma/client';
+import moment from 'moment';
 
 const router = Router();
 router.get('/', authRole(UserRole.ADMIN), async (req, res) => {
@@ -262,7 +263,7 @@ router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
         last_name: req.body.last_name || undefined,
         pesel: Number(req.body.pesel) || undefined,
         role: req.body.role || undefined,
-        birth_date: new Date(new Date(req.body.birth_date).toISOString().slice(0, 19).replace('T', ' ') + '.000000') || undefined,
+        birth_date: moment(req.body.birth_date, 'DD/MM/YYYY').toDate() || undefined,
         gender: req.body.gender || undefined,
         title: req.body.title || undefined,
 
@@ -298,7 +299,7 @@ router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
     res.status(200).send(result);
   } catch (err: any) {
     console.log(err);
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 
 });

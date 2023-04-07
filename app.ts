@@ -51,29 +51,31 @@ apiKey.apiKey = process.env.SENDINBLUE_API!;
 app.use(express.json());
 app.use(cors({
     // origin:'https://um.dominiksek.com',
-    origin:true,
+    origin:'http://localhost:5173',
     methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD", "DELETE"],
     credentials: true
 }));
 
 app.use(flash());
 
+let cookieSettings = {
+    maxAge: 900000, // 15 minutes
+    sameSite: true,
+    secure: process.env.NODE_ENV === 'production',
+    // path: "/",
+    // domain: ".dominiksek.com"
+}
+
 app.use(express.urlencoded({ extended: false }));
 app.set("trust proxy", 1);
+
 app.use(session({
     store: redisStore,
     proxy: true,
     secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
-    cookie: {
-        maxAge: 900000, // 15 minutes
-        sameSite: "none",
-        secure: true,
-        httpOnly:true,
-        path: "/",
-        domain: ".dominiksek.com"
-    }
+    cookie: cookieSettings,
 }));
 
 initialize(passport);
