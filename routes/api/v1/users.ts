@@ -223,11 +223,13 @@ router.put('/profile/avatar', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER
             }
 
           },
-
         }
       },
     });
-    res.status(200).send(result);
+    res.status(200).send({
+        id: result.person_id,
+        avatar_url: req.body.avatar_url
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
