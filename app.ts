@@ -1,3 +1,5 @@
+import {sessionMiddleware,wrap} from "./sessionController";
+
 interface BigIntWithToJSON extends BigInt {
     toJSON(): string;
 }
@@ -8,7 +10,6 @@ interface BigIntWithToJSON extends BigInt {
 import express from 'express';
 import cors from 'cors';
 import flash from 'express-flash';
-import session from 'express-session';
 import passport from 'passport';
 import prisma from './prisma';
 import { initialize } from './passport-config';
@@ -19,83 +20,74 @@ import cloudinary from 'cloudinary';
 const SibApiV3Sdk = require('sib-api-v3-typescript');
 const bcrypt = require('bcrypt');
 const cookieParser = require("cookie-parser");
-
-import RedisStore from "connect-redis"
-import {createClient} from "redis"
+import {createServer} from "http";
+import {Server} from "socket.io";
 
 const sender = {
     email: 'wu.pwdreset@gmail.com',
     name: 'Wirtualna uczelnia',
 }
 
-let redisClient = createClient({
-    url: process.env.REDIS_URL_EXTERNAL,
-})
-redisClient.connect().catch(console.error)
-let redisStore = new RedisStore({
-    client: redisClient,
-    // prefix: "myapp:",
-})
-
 const unixTimestamp = Math.round(new Date().getTime() / 1000);
 const timestamp_pg = new Date(new Date().toISOString().slice(0, 19).replace('T', ' ') + '.000000')
 
 require('dotenv').config();
 const app = express();
+const server = require('http').createServer(app);
+
+const io = new Server(server,{
+    cors:{
+        origin:'http://localhost:5173',
+        methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD", "DELETE"],
+        credentials: true
+    }
+})
+
 app.use(cookieParser());
 let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 let apiKey = apiInstance.authentications['apiKey'];
 apiKey.apiKey = process.env.SENDINBLUE_API!;
 
-
 app.use(express.json());
 
-
-
-// app.use(cors({
-//     origin:'http://localhost:5173',
-//     methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD", "DELETE"],
-//     credentials: true
-// }));
-
-//prod:
 app.use(cors({
-    // origin:'https://um.dominiksek.com',
-    origin:true,
+    origin:'http://localhost:5173',
     methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD", "DELETE"],
     credentials: true
 }));
+
+//prod:
+// app.use(cors({
+//     // origin:'https://um.dominiksek.com',
+//     origin:true,
+//     methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD", "DELETE"],
+//     credentials: true
+// }));
 
 app.use(flash());
 
 app.use(express.urlencoded({ extended: false }));
 app.set("trust proxy", 1);
 
+
+app.use(sessionMiddleware);
+
+//prod:
 // app.use(session({
 //     store: redisStore,
 //     proxy: true,
 //     secret: process.env.SESSION_SECRET!,
 //     resave: false,
 //     saveUninitialized: false,
-//     cookie: cookieSettings,
+//     cookie: {
+//         maxAge: 900000, // 15 minutes
+//         sameSite: "none",
+//         secure: true,
+//         httpOnly:true,
+//         path: "/",
+//         domain: ".dominiksek.com"
+//     }
 // }));
-
-//prod:
-app.use(session({
-    store: redisStore,
-    proxy: true,
-    secret: process.env.SESSION_SECRET!,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        maxAge: 900000, // 15 minutes
-        sameSite: "none",
-        secure: true,
-        httpOnly:true,
-        path: "/",
-        domain: ".dominiksek.com"
-    }
-}));
 
 initialize(passport);
 app.use(passport.initialize());
@@ -113,12 +105,11 @@ app.use(passport.session());
 //     next();
 // });
 
-app.use('/api/v1', apiV1);
 
+app.use('/api/v1', apiV1);
 app.get('/api/v1/', (req, res, next) => {
     res.status(200).send("OK");
 });
-
 app.post('/api/v1/login', (req, res, next) => {
     passport.authenticate('local', (err: any, user: Express.User, info: { message: any; }) => {
         if (err) {
@@ -150,7 +141,6 @@ app.post('/api/v1/login', (req, res, next) => {
         }
     })(req, res, next);
 });
-
 app.get('/api/v1/check-auth', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     if (!req.user) {
@@ -172,7 +162,6 @@ app.get('/api/v1/check-auth', async (req, res) => {
         );
     }
 });
-
 app.get('/api/v1/cloud-signature', authRoleOrPerson([UserRole.ADMIN, UserRole.STUDENT, UserRole.TEACHER]), (req, res, next) => {
     // @ts-ignore there are no types avaliable for cloudinary library and im too lazy to write them
     const signature = cloudinary.utils.api_sign_request({
@@ -229,7 +218,6 @@ app.post('/api/v1/forgot-password', async (req, res, next) => {
         
     }
 });
-
 app.post('/api/v1/reset-password', async (req, res, next) => {
     const { token, password } = req.body;
     if (!token || !password) {
@@ -265,5 +253,15 @@ app.post('/api/v1/reset-password', async (req, res, next) => {
     
 });
 
+io.use(wrap(sessionMiddleware));
+//TODO: add types for socket request session
+io.on("connect", socket =>{
+    console.log('connected');
+    console.log(socket.request.session);
+    console.log(socket.id)
+})
+server.listen(3000,()=>{
+    console.log("Server started on port 3000");
+})
 export default app;
 
