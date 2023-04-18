@@ -1,19 +1,16 @@
 import { NextFunction, Request, Response } from 'express';
 import prisma from '../prisma';
 import { UserRole } from '../enums/userRole';
+import {getUserRole} from "../functions/getUserRole";
 
 export const authRole = (role: UserRole | UserRole[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       res.status(401).send('Unauthorized');
     } else {
-      const findPerson = await prisma.person.findUnique({
-        where: {
-          id: req.user.person_id
-        }
-      });
+      let userRole = await getUserRole(req);
       role = Array.isArray(role) ? role : [role];
-      const hasPermission = role.some((r) => r === findPerson?.role);
+      const hasPermission = role.some((r) => r === userRole);
       if (!hasPermission) {
         res.status(403).send('Forbidden');
       } else {

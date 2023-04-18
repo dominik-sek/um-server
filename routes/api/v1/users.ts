@@ -4,48 +4,71 @@ import { authRole, authRoleOrPerson } from '../../../middleware/authPage';
 import { UserRole } from '../../../enums/userRole';
 import { address, contact, library_access, person, personal } from '@prisma/client';
 import moment from 'moment';
+import {getUserRole} from "../../../functions/getUserRole";
 
 const router = Router();
-router.get('/', authRole(UserRole.ADMIN), async (req, res) => {
+router.get('/', authRole([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]),async (req, res) => {
   try {
-    const result:person[] = await prisma.person.findMany({
-      include: {
-        address: true,
-        contact: true,
-        personal: true,
-        library_access: true,
-        faculty: true,
-        course: true,
-        gradebook: {
-          include: {
-            course_students: {
-              include: {
-                 course : true,
-               }
+    let userRole = await getUserRole(req);
+    let result;
+
+    if (userRole === UserRole.ADMIN) {
+      result = await prisma.person.findMany({
+        include: {
+          address: true,
+          contact: true,
+          personal: true,
+          library_access: true,
+          faculty: true,
+          course: true,
+          gradebook: {
+            include: {
+              course_students: {
+                include: {
+                  course : true,
+                }
+              }
+            }
+          },
+          account: {
+            select: {
+              username: true,
+              account_images: {
+                select: {
+                  avatar_url: true,
+                  background_url: true,
+                }
+              }
             }
           }
         },
-        account: {
-          select: {
-            username: true,
-            account_images: {
-              select: {
-                avatar_url: true,
-                background_url: true,
+      });
+    }
+    else {
+      result = await prisma.person.findMany({
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          role: true,
+          account: {
+            select: {
+              account_images: {
+                select: {
+                  avatar_url: true,
+                }
               }
             }
           }
         }
-      },
-    });
-
+      });
+    }
     res.status(200).send(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 router.get('/profile', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]), async (req, res) => {
-  console.log(res.cookie)
   try {
     const result = await prisma.person.findUnique({
       where: {
@@ -94,7 +117,6 @@ router.get('/profile', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER, UserR
     res.status(500).json({ error: err.message });
   }
 });
-
 router.get('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
   try {
     const result = await prisma.person.findUnique({
@@ -204,7 +226,6 @@ router.post('/', authRole(UserRole.ADMIN), async (req, res) => {
   }
 
 });
-
 router.put('/profile/avatar', authRoleOrPerson([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]), async (req, res) => {
   try {
     const result = await prisma.account.update({
@@ -255,7 +276,6 @@ router.put('/profile/background', authRoleOrPerson([UserRole.ADMIN, UserRole.TEA
 });
 router.put('/:id', authRoleOrPerson(UserRole.ADMIN), async (req, res) => {
   try {
-    console.log(req.body)
     const result = await prisma.person.update({
       where: {
         id: Number(req.params.id),
