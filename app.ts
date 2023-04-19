@@ -217,7 +217,7 @@ app.post('/api/v1/forgot-password', async (req, res, next) => {
         }).catch((error:any) => {
             res.status(500).send({ message: 'Internal server error' });
         });
-        
+
     }
 });
 app.post('/api/v1/reset-password', async (req, res, next) => {
@@ -233,7 +233,7 @@ app.post('/api/v1/reset-password', async (req, res, next) => {
         if (!findPersonByToken) {
             res.status(404).send({ message: 'User not found' });
         } else {
-            
+
             if (timestamp_pg.getTime() > findPersonByToken.reset_token_expires!.getTime()) {
                 res.status(400).send({ message: 'Token expired' });
             } else {
@@ -251,13 +251,14 @@ app.post('/api/v1/reset-password', async (req, res, next) => {
             }
         }
     }
-    
+
 });
 
 io.use(wrap(sessionMiddleware));
 io.use(authSocket);
 io.on("connect", async (socket) => {
     console.log('connected client: ', socket.data.user);
+    socket.join(socket.data.user);
 
     const chatrooms = await prisma.chatroom.findMany({
         where: {
@@ -301,15 +302,63 @@ io.on("connect", async (socket) => {
         }
     })
     if(chatrooms.length >= 0){
-        socket.emit("chatrooms",chatrooms);
-        //for each chatroom, join the socket to the chatroom
         chatrooms.forEach((chatroom) => {
-            socket.join(chatroom.id as unknown as string);
-            console.log(`User ${socket.data.user} joined chatroom ${chatroom.id}`);
+                socket.emit("chatrooms",chatrooms);
+                socket.join(chatroom.id as unknown as string);
+                console.log(`User ${socket.data.user} joined chatroom ${chatroom.id}`);
         })
     }
+    socket.on("join-chatroom", async (chatroomId) => {
+        socket.join(chatroomId as string);
+        //find chatroom by id
+        const chatroom = await prisma.chatroom.findFirst({
+            where: {
+                id: chatroomId
+            },
+            include: {
+                chatroom_user: {
+                    where: {
+                        user_id: {
+                            not: socket.data.user
+                        }
+                    },
+                    include: {
+                        account:{
+                            select: {
+                                account_images: {
+                                    select: {
+                                        avatar_url: true
+                                    }
+                                },
+                                person:{
+                                    select:{
+                                        first_name: true,
+                                        last_name: true
+                                    }
+                                }
+                            }
+                        },
+                    },
 
-    //TODO: socket on seen-messages change the status to read
+                },
+                message:{
+                    orderBy: {
+                        sent_at: 'desc'
+                    }
+                }
+            }
+        });
+        console.log(chatroom)
+        console.log(`User ${socket.data.user} joined chatroom ${chatroomId} using join-chatroom`);
+        socket.emit("join-chatroom",chatroom);
+    })
+
+    socket.on("seen-messages", async (chatroom) => {
+
+        //todo: find a better way to update so there is no spam
+
+
+    });
 
 
     // socket.on("join-chatroom", (chatroom_id) => {
@@ -326,7 +375,7 @@ io.on("connect", async (socket) => {
                 last_activity: chatroom.last_activity
             }
         })
-        //TODO: future feat for multiple users in chatroom
+
         let usersInChatroom = await prisma.chatroom_user.createMany({
             data: [
                 {
@@ -339,6 +388,7 @@ io.on("connect", async (socket) => {
                 }
             ]
         })
+
         let newChatroom = await prisma.chatroom.findFirst({
             where: {
                 id: createdChatroom.id
@@ -376,17 +426,14 @@ io.on("connect", async (socket) => {
                     }
                 }
             }
-
-
         })
-        //send chatroom to both users
-        socket.to(chatroom.recipient).emit("create-chatroom", newChatroom);
+
+        socket.join(newChatroom!.id as unknown as string);
+        console.log(`User ${socket.data.user} joined chatroom ${newChatroom!.id}`);
         socket.emit("create-chatroom", newChatroom);
+
     })
-    // socket.on("leave-chatroom", async (chatroom_id) => {
-    //     socket.leave(chatroom_id);
-    //     console.log(`User ${socket.data.user} left chatroom ${chatroom_id}`);
-    // });
+
 
     socket.on("send-message", async (message) => {
         let createdMessage = await prisma.message.create({
@@ -398,15 +445,18 @@ io.on("connect", async (socket) => {
                 status: message.status,
             }
         });
-        // let recipient = await prisma.chatroom_user.findFirst({
-        //     where: {
-        //         chatroom_id: message.chatroom_id,
-        //         user_id: {
-        //             not: message.sender_id
-        //         }
-        //     }
-        // })
+        let recipient = await prisma.chatroom_user.findFirst({
+            where: {
+                chatroom_id: message.chatroom_id,
+                user_id: {
+                    not: message.sender_id
+                }
+            }
+        })
 
+        // socket.to(message.chatroom_id).emit("new-message",message.chatroom_id);
+        socket.to(recipient!.user_id! as any as string).emit("new-message",message.chatroom_id);
+        //notify recipient with user_id to join this chatroom
         io.in(message.chatroom_id).emit("send-message",createdMessage);
     });
 })
