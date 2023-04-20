@@ -217,7 +217,6 @@ app.post('/api/v1/forgot-password', async (req, res, next) => {
         }).catch((error:any) => {
             res.status(500).send({ message: 'Internal server error' });
         });
-
     }
 });
 app.post('/api/v1/reset-password', async (req, res, next) => {
@@ -301,6 +300,7 @@ io.on("connect", async (socket) => {
             }
         }
     })
+
     if(chatrooms.length >= 0){
         chatrooms.forEach((chatroom) => {
                 socket.emit("chatrooms",chatrooms);
@@ -355,16 +355,60 @@ io.on("connect", async (socket) => {
 
     socket.on("seen-messages", async (chatroom) => {
 
-        //todo: find a better way to update so there is no spam
+        let updatedMessages = await prisma.message.updateMany({
+            where: {
+                chatroom_id: chatroom.id,
+                sender_id: {
+                    not: socket.data.user
+                },
+                status: 'sent'
+            },
+            data: {
+                status: 'read'
+            }
+        })
+        const updatedChatroom = await prisma.chatroom.findFirst({
+            where: {
+                id: chatroom.id
+            },
+            include: {
+                chatroom_user: {
+                    where: {
+                        user_id: {
+                            not: socket.data.user
+                        }
+                    },
+                    include: {
+                        account:{
+                            select: {
+                                account_images: {
+                                    select: {
+                                        avatar_url: true
+                                    }
+                                },
+                                person:{
+                                    select:{
+                                        first_name: true,
+                                        last_name: true
+                                    }
+                                }
+                            }
+                        },
+                    },
+
+                },
+                message:{
+                    orderBy: {
+                        sent_at: 'desc'
+                    }
+                }
+            }
+        });
 
 
+
+        socket.to(chatroom.id as unknown as string).emit("seen-messages",updatedChatroom);
     });
-
-
-    // socket.on("join-chatroom", (chatroom_id) => {
-    //     socket.join(chatroom_id as string);
-    //     console.log(`User ${socket.data.user} joined chatroom ${chatroom_id}`);
-    // });
 
 
     socket.on("create-chatroom", async (chatroom) => {
@@ -433,8 +477,6 @@ io.on("connect", async (socket) => {
         socket.emit("create-chatroom", newChatroom);
 
     })
-
-
     socket.on("send-message", async (message) => {
         let createdMessage = await prisma.message.create({
             data: {
@@ -442,7 +484,7 @@ io.on("connect", async (socket) => {
                 sender_id: message.sender_id,
                 sent_at: message.sent_at,
                 content: message.content,
-                status: message.status,
+                status: 'sent',
             }
         });
         let recipient = await prisma.chatroom_user.findFirst({
