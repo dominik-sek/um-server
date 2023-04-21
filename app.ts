@@ -255,10 +255,13 @@ app.post('/api/v1/reset-password', async (req, res, next) => {
 
 io.use(wrap(sessionMiddleware));
 io.use(authSocket);
+io.on("reconnect_attempt", () => {
+    console.log('reconnect_attempt');
+});
+
 io.on("connect", async (socket) => {
     console.log('connected client: ', socket.data.user);
     socket.join(socket.data.user);
-
     const chatrooms = await prisma.chatroom.findMany({
         where: {
             chatroom_user: {
@@ -296,17 +299,31 @@ io.on("connect", async (socket) => {
             message:{
                 orderBy: {
                     sent_at: 'desc'
-                }
+                },
+                take: 20,
+                //TODO: on scroll up, fetch more messages
             }
         }
     })
-
     if(chatrooms.length >= 0){
         chatrooms.forEach((chatroom) => {
                 socket.emit("chatrooms",chatrooms);
                 socket.join(chatroom.id as unknown as string);
                 console.log(`User ${socket.data.user} joined chatroom ${chatroom.id}`);
         })
+        const unreadMessages = await prisma.chatroom_user.findMany({
+            where: {
+                chatroom_id: {
+                    in: chatrooms.map((chatroom) => chatroom.id)
+                },
+                user_id: socket.data.user,
+            },
+            select: {
+                chatroom_id: true,
+                unread_count: true,
+            }
+        });
+        socket.emit("unread-messages", unreadMessages);
     }
     socket.on("join-chatroom", async (chatroomId) => {
         socket.join(chatroomId as string);
@@ -352,9 +369,7 @@ io.on("connect", async (socket) => {
         console.log(`User ${socket.data.user} joined chatroom ${chatroomId} using join-chatroom`);
         socket.emit("join-chatroom",chatroom);
     })
-
     socket.on("seen-messages", async (chatroom) => {
-
         let updatedMessages = await prisma.message.updateMany({
             where: {
                 chatroom_id: chatroom.id,
@@ -404,13 +419,22 @@ io.on("connect", async (socket) => {
                 }
             }
         });
+        //update unread count
+        let updatedChatroomUser = await prisma.chatroom_user.update({
+            where: {
+                user_id_chatroom_id:{
+                    user_id: socket.data.user,
+                    chatroom_id: chatroom.id
+                }
+            },
+            data: {
+                unread_count: 0
+            }
+        });
 
-
-
+        console.log('updatedChatroom because of message status update: ',updatedChatroom)
         socket.to(chatroom.id as unknown as string).emit("seen-messages",updatedChatroom);
     });
-
-
     socket.on("create-chatroom", async (chatroom) => {
         let createdChatroom = await prisma.chatroom.create({
             data: {
@@ -495,11 +519,41 @@ io.on("connect", async (socket) => {
                 }
             }
         })
+        //whenever a new message is sent, update last_activity of chatroom
+        let updatedChatroom = await prisma.chatroom.update({
+            where: {
+                id: message.chatroom_id
+            },
+            data: {
+                last_activity: message.sent_at,
+            }
+        });
+        //update unread count for the chatroom_user who is not the sender
+        let updatedChatroomUser = await prisma.chatroom_user.update({
+            where: {
+                user_id_chatroom_id: {
+                    user_id: recipient!.user_id!,
+                    chatroom_id: message.chatroom_id
+                }
+            },
+            data:{
+                unread_count: {
+                    increment: 1
+                }
+            }
+        });
 
-        // socket.to(message.chatroom_id).emit("new-message",message.chatroom_id);
+        console.log(`User ${socket.data.user} sent a message in chatroom ${message.chatroom_id}`);
         socket.to(recipient!.user_id! as any as string).emit("new-message",message.chatroom_id);
         //notify recipient with user_id to join this chatroom
         io.in(message.chatroom_id).emit("send-message",createdMessage);
+    });
+    socket.on("user-typing",({chatroomId, senderId, isTyping})=>{
+        console.log(`User ${senderId} is typing in chatroom ${chatroomId}? ${isTyping}`);
+        socket.to(chatroomId).emit("user-typing",{chatroomId, senderId, isTyping});
+    })
+    socket.on("disconnect", () => {
+        console.log(`User ${socket.data.user} disconnected`);
     });
 })
 

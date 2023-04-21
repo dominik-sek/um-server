@@ -22,11 +22,12 @@ model chatroom {
 }
 
 model chatroom_user {
-  id          Int       @id(map: "chatroom_user_pk") @default(autoincrement())
-  user_id     Int?
-  chatroom_id Int?
-  account     account?  @relation(fields: [user_id], references: [person_id], onDelete: NoAction, onUpdate: NoAction, map: "chatroom_user_account_person_id_fk")
-  chatroom    chatroom? @relation(fields: [chatroom_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "chatroom_user_chatroom_id_fk")
+  id           Int       @id(map: "chatroom_user_pk") @default(autoincrement())
+  user_id      Int?
+  chatroom_id  Int?
+  unread_count Int       @default(0)
+  account      account?  @relation(fields: [user_id], references: [person_id], onDelete: NoAction, onUpdate: NoAction, map: "chatroom_user_account_person_id_fk")
+  chatroom     chatroom? @relation(fields: [chatroom_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "chatroom_user_chatroom_id_fk")
 
   @@unique([user_id, chatroom_id], map: "unique_user_chatroom")
   @@schema("chat")
