@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["multiSchema"]
+  previewFeatures = ["multiSchema", "orderByNulls"]
 }
 
 datasource db {
@@ -26,6 +26,8 @@ model chatroom_user {
   user_id      Int?
   chatroom_id  Int?
   unread_count Int       @default(0)
+  joined_at    DateTime? @db.Date
+  left_at      DateTime? @db.Date
   account      account?  @relation(fields: [user_id], references: [person_id], onDelete: NoAction, onUpdate: NoAction, map: "chatroom_user_account_person_id_fk")
   chatroom     chatroom? @relation(fields: [chatroom_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "chatroom_user_chatroom_id_fk")
 

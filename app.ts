@@ -267,8 +267,12 @@ io.on("connect", async (socket) => {
             chatroom_user: {
                 some: {
                     user_id: socket.data.user,
-                }
-            }
+                    joined_at: {
+                        not: null
+                    },
+                    left_at: null,
+                },
+            },
         },
         include: {
             chatroom_user: {
@@ -305,7 +309,7 @@ io.on("connect", async (socket) => {
             }
         }
     })
-    if(chatrooms.length >= 0){
+    if(chatrooms.length > 0){
         chatrooms.forEach((chatroom) => {
                 socket.emit("chatrooms",chatrooms);
                 socket.join(chatroom.id as unknown as string);
@@ -326,9 +330,9 @@ io.on("connect", async (socket) => {
 
         socket.emit("unread-messages", unreadMessages);
     }
+
     socket.on("join-chatroom", async (chatroomId) => {
         socket.join(chatroomId as string);
-        //find chatroom by id
         const chatroom = await prisma.chatroom.findFirst({
             where: {
                 id: chatroomId
@@ -366,10 +370,12 @@ io.on("connect", async (socket) => {
                 }
             }
         });
+        console.log('updating messages from within join-chatroom event');
         console.log(`User ${socket.data.user} joined chatroom ${chatroomId} using join-chatroom`);
         socket.emit("join-chatroom",chatroom);
     })
     socket.on("seen-messages", async (chatroom) => {
+
         let updatedMessages = await prisma.message.updateMany({
             where: {
                 chatroom_id: chatroom.id,
@@ -391,7 +397,8 @@ io.on("connect", async (socket) => {
                     where: {
                         user_id: {
                             not: socket.data.user
-                        }
+                        },
+                        left_at: null
                     },
                     include: {
                         account:{
@@ -412,6 +419,7 @@ io.on("connect", async (socket) => {
                     },
 
                 },
+                //if the user left the chat at some point, but then rejoined, show messages from when they left
                 message:{
                     orderBy: {
                         sent_at: 'desc'
@@ -419,18 +427,20 @@ io.on("connect", async (socket) => {
                 }
             }
         });
-        //update unread count
-        let updatedChatroomUser = await prisma.chatroom_user.update({
-            where: {
-                user_id_chatroom_id:{
-                    user_id: socket.data.user,
-                    chatroom_id: chatroom.id
+
+        if(updatedChatroom){
+            let updatedChatroomUser = await prisma.chatroom_user.update({
+                where: {
+                    user_id_chatroom_id:{
+                        user_id: socket.data.user,
+                        chatroom_id: chatroom.id
+                    }
+                },
+                data: {
+                    unread_count: 0
                 }
-            },
-            data: {
-                unread_count: 0
-            }
-        });
+            });
+        }
 
         const unreadMessages = await prisma.chatroom_user.findMany({
             where: {
@@ -451,7 +461,60 @@ io.on("connect", async (socket) => {
         //send event to trigger update of unread count
         socket.emit("unread-messages", unreadMessages);
     });
+
     socket.on("create-chatroom", async (chatroom) => {
+        //check if chatroom exists:
+        const existingChatroom = await prisma.chatroom.findFirst({
+            where: {
+                chatroom_user: {
+                    every: {
+                        user_id: {
+                            in: [chatroom.created_by, chatroom.recipient]
+                        }
+                    }
+                }
+            },
+            include:{
+                message: {
+                    take: 1,
+                    orderBy: {
+                        sent_at: "desc"
+                    }
+                },
+
+                chatroom_user: {
+                    where: {
+                        user_id: {
+                            not: socket.data.user
+                        }
+                    },
+                    include: {
+                        account: {
+                            select: {
+                                account_images: {
+                                    select: {
+                                        avatar_url: true
+                                    }
+                                },
+                                person:{
+                                    select:{
+                                        first_name: true,
+                                        last_name: true
+                                    }
+                                }
+                            },
+                        },
+                    }
+                }
+            }
+        });
+        if(existingChatroom){
+            socket.join(existingChatroom.id as unknown as string);
+            socket.emit("create-chatroom",existingChatroom);
+            console.log(`Chatroom ${existingChatroom.id} already exists, joining it instead`);
+            return;
+        }
+
         let createdChatroom = await prisma.chatroom.create({
             data: {
                 created_by: chatroom.created_by,
@@ -464,11 +527,13 @@ io.on("connect", async (socket) => {
             data: [
                 {
                     chatroom_id: createdChatroom.id,
-                    user_id: chatroom.created_by
+                    user_id: chatroom.created_by,
+                    joined_at: chatroom.created_at
                 },
                 {
                     chatroom_id: createdChatroom.id,
-                    user_id: chatroom.recipient
+                    user_id: chatroom.recipient,
+                    // joined_at: chatroom.created_at
                 }
             ]
         })
@@ -517,6 +582,7 @@ io.on("connect", async (socket) => {
         socket.emit("create-chatroom", newChatroom);
 
     })
+
     socket.on("send-message", async (message) => {
         let createdMessage = await prisma.message.create({
             data: {
@@ -544,7 +610,6 @@ io.on("connect", async (socket) => {
                 last_activity: message.sent_at,
             }
         });
-        //update unread count for the chatroom_user who is not the sender
         let updatedChatroomUser = await prisma.chatroom_user.update({
             where: {
                 user_id_chatroom_id: {
@@ -555,39 +620,53 @@ io.on("connect", async (socket) => {
             data:{
                 unread_count: {
                     increment: 1
-                }
+                },
+                joined_at: message.sent_at,
+                left_at: null
             }
         });
 
-
         const unreadMessages = await prisma.chatroom_user.findMany({
             where: {
-                chatroom_id: {
-                    in: chatrooms.map((chatroom) => chatroom.id)
-                },
-                user_id: {
-                    not: message.sender_id
-                }
+                chatroom_id: message.chatroom_id,
+                user_id: recipient!.user_id!
             },
             select: {
                 chatroom_id: true,
                 unread_count: true,
             }
         });
-
+        console.log(unreadMessages)
         console.log(`User ${socket.data.user} sent a message in chatroom ${message.chatroom_id}`);
         socket.to(recipient!.user_id! as any as string).emit("new-message",message.chatroom_id);
         socket.to(recipient!.user_id! as any as string).emit("unread-messages",unreadMessages);
         io.in(message.chatroom_id).emit("send-message",createdMessage);
-        //this sends message to all users in the chatroom
-        // io.in(message.chatroom_id).emit("unread-messages",unreadMessages);
-        //send message to everyone except the sender
-
     });
     socket.on("user-typing",({chatroomId, senderId, isTyping})=>{
         console.log(`User ${senderId} is typing in chatroom ${chatroomId}? ${isTyping}`);
         socket.to(chatroomId).emit("user-typing",{chatroomId, senderId, isTyping});
     })
+
+    //this event
+    socket.on("delete-chatroom", async (chatroomId) => {
+        socket.leave(chatroomId as unknown as string);
+        //update chatroom_user table, set left_at to current time
+        let updatedChatroomUser = await prisma.chatroom_user.update({
+            where: {
+                user_id_chatroom_id: {
+                    user_id: socket.data.user,
+                    chatroom_id: chatroomId
+                },
+            },
+            data: {
+                joined_at: null,
+                left_at: new Date()
+            }
+        });
+        //force update front end to remove chatroom from list
+        socket.emit("delete-chatroom", chatroomId);
+    });
+
     socket.on("disconnect", () => {
         console.log(`User ${socket.data.user} disconnected`);
     });
