@@ -1,10 +1,51 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema", "orderByNulls"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["chat", "school"]
+}
+
+model chatroom {
+  id            Int             @id(map: "chatroom_pk") @default(autoincrement())
+  created_by    Int?
+  created_at    DateTime?       @db.Timestamp(6)
+  last_activity DateTime?       @db.Timestamp(6)
+  account       account?        @relation(fields: [created_by], references: [person_id], onDelete: NoAction, onUpdate: NoAction, map: "chatroom_account_person_id_fk")
+  chatroom_user chatroom_user[]
+  message       message[]
+
+  @@schema("chat")
+}
+
+model chatroom_user {
+  id           Int       @id(map: "chatroom_user_pk") @default(autoincrement())
+  user_id      Int?
+  chatroom_id  Int?
+  unread_count Int       @default(0)
+  joined_at    DateTime? @db.Date
+  left_at      DateTime? @db.Date
+  account      account?  @relation(fields: [user_id], references: [person_id], onDelete: NoAction, onUpdate: NoAction, map: "chatroom_user_account_person_id_fk")
+  chatroom     chatroom? @relation(fields: [chatroom_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "chatroom_user_chatroom_id_fk")
+
+  @@unique([user_id, chatroom_id], map: "unique_user_chatroom")
+  @@schema("chat")
+}
+
+model message {
+  id            Int       @id(map: "message_pk") @default(autoincrement())
+  sender_id     Int?
+  chatroom_id   Int?
+  content       String?
+  sent_at       DateTime? @db.Timestamp(6)
+  status        String?   @db.VarChar(10)
+  chatroom_user account?  @relation(fields: [sender_id], references: [person_id], onDelete: NoAction, onUpdate: NoAction, map: "message_chatroom_user_id_fk")
+  chatroom      chatroom? @relation(fields: [chatroom_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "message_chatroom_id_fk")
+
+  @@schema("chat")
 }
 
 model account {
@@ -14,8 +55,13 @@ model account {
   last_login          DateTime        @db.Timestamp(6)
   reset_token         String?         @db.VarChar
   reset_token_expires DateTime?       @db.Timestamp(6)
+  chatroom            chatroom[]
+  chatroom_user       chatroom_user[]
+  message             message[]
   person              person          @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "account_person_id_fk")
   account_images      account_images?
+
+  @@schema("school")
 }
 
 model account_images {
@@ -23,6 +69,8 @@ model account_images {
   avatar_url     String? @db.VarChar
   background_url String  @db.VarChar
   account        account @relation(fields: [person_id], references: [person_id], onDelete: Cascade, onUpdate: NoAction, map: "account_images_account_person_id_fk")
+
+  @@schema("school")
 }
 
 model address {
@@ -33,6 +81,8 @@ model address {
   street      String @db.VarChar(64)
   person_id   Int    @id(map: "address_pk")
   person      person @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "address_person_id_fk")
+
+  @@schema("school")
 }
 
 model contact {
@@ -40,20 +90,24 @@ model contact {
   phone_number Int?
   person_id    Int    @id(map: "contact_pk")
   person       person @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "contact_person_id_fk")
+
+  @@schema("school")
 }
 
 model course {
-  id                Int               @id(map: "course_pk") @default(autoincrement())
-  name              String            @db.VarChar(64)
-  type              String            @db.VarChar(64)
-  ects              Int
-  person_id         Int
-  semester          String            @db.Char(2)
-  department        Int
-  department_course department        @relation("course_departmentTodepartment", fields: [department], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "course_department_id_fk")
-  person            person            @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "course_person_id_fk")
-  course_students   course_students[]
-  grade             grade[]
+  id                                       Int               @id(map: "course_pk") @default(autoincrement())
+  name                                     String            @db.VarChar(64)
+  type                                     String            @db.VarChar(64)
+  ects                                     Int
+  person_id                                Int
+  semester                                 String            @db.Char(2)
+  department                               Int
+  department_course_departmentTodepartment department        @relation("course_departmentTodepartment", fields: [department], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "course_department_id_fk")
+  person                                   person            @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "course_person_id_fk")
+  course_students                          course_students[]
+  grade                                    grade[]
+
+  @@schema("school")
 }
 
 model course_students {
@@ -62,6 +116,8 @@ model course_students {
   id           Int       @id(map: "course_students_pk") @default(autoincrement())
   course       course    @relation(fields: [course_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "course_students_course_id_fk")
   gradebook    gradebook @relation(fields: [gradebook_id], references: [gradebook_id], onDelete: Cascade, onUpdate: NoAction, map: "course_students_gradebook_gradebook_id_fk")
+
+  @@schema("school")
 }
 
 model department {
@@ -75,6 +131,8 @@ model department {
   course_course_departmentTodepartment course[]              @relation("course_departmentTodepartment")
   faculty                              faculty               @relation(fields: [faculty_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "department_faculty_id_fk")
   department_students                  department_students[]
+
+  @@schema("school")
 }
 
 model department_students {
@@ -82,6 +140,8 @@ model department_students {
   department_id Int
   department    department @relation(fields: [department_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "department_students_department_id_fk")
   gradebook     gradebook  @relation(fields: [gradebook_id], references: [gradebook_id], onDelete: Cascade, onUpdate: NoAction, map: "department_students_gradebook_gradebook_id_fk")
+
+  @@schema("school")
 }
 
 model faculty {
@@ -90,6 +150,8 @@ model faculty {
   person_id  Int
   department department[]
   person     person       @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "faculty_person_id_fk")
+
+  @@schema("school")
 }
 
 model grade {
@@ -100,6 +162,8 @@ model grade {
   grade_Id     Int       @id(map: "grade_pk") @default(autoincrement())
   course       course    @relation(fields: [course_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "grade_course_id_fk")
   gradebook    gradebook @relation(fields: [gradebook_id], references: [gradebook_id], onDelete: Cascade, onUpdate: NoAction, map: "grade_gradebook_gradebook_id_fk")
+
+  @@schema("school")
 }
 
 model gradebook {
@@ -110,12 +174,16 @@ model gradebook {
   department_students department_students?
   grade               grade[]
   person              person               @relation(fields: [person_id], references: [id], onDelete: Cascade, map: "gradebook_person_id_fk")
+
+  @@schema("school")
 }
 
 model library_access {
   person_id  Int    @id(map: "library_access_pk")
   has_access String @db.Char(1)
   person     person @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "library_access_person_id_fk")
+
+  @@schema("school")
 }
 
 model payments {
@@ -125,6 +193,8 @@ model payments {
   amount       Int      @default(0)
   person_id    Int
   person       person   @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payments_person_id_fk")
+
+  @@schema("school")
 }
 
 model person {
@@ -146,6 +216,8 @@ model person {
   payments               payments[]
   role_person_roleTorole role            @relation("person_roleTorole", fields: [role], references: [name], onDelete: Cascade, onUpdate: NoAction, map: "person_role_name_fk")
   personal               personal?
+
+  @@schema("school")
 }
 
 model personal {
@@ -153,15 +225,21 @@ model personal {
   disabled  String @db.Char(1)
   married   String @db.Char(1)
   person    person @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "personal_person_id_fk")
-}
 
-model role {
-  name                     String   @id(map: "role_pk") @db.VarChar(12)
-  person_person_roleTorole person[] @relation("person_roleTorole")
+  @@schema("school")
 }
 
 model printouts {
   id          Int     @id(map: "printouts_pk") @default(autoincrement())
   url         String? @db.VarChar
   description String? @db.VarChar
+
+  @@schema("school")
+}
+
+model role {
+  name                     String   @id(map: "role_pk") @db.VarChar(12)
+  person_person_roleTorole person[] @relation("person_roleTorole")
+
+  @@schema("school")
 }
