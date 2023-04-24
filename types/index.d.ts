@@ -1,5 +1,4 @@
-import {Socket} from "socket.io";
-import {IncomingMessage} from "http";
+
 interface BigInt {
     /** Convert to BigInt to string form in JSON.stringify */
     toJSON: () => string;

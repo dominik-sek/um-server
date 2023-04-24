@@ -1,41 +1,33 @@
-import Printouts from "./routes/api/v1/printouts";
 
 interface BigIntWithToJSON extends BigInt {
     toJSON(): string;
 }
-
 (BigInt.prototype as BigIntWithToJSON).toJSON = function () {
     return this.toString();
 };
-
 import {sessionMiddleware,wrap} from "./sessionController";
 import express from 'express';
 import cors from 'cors';
 import flash from 'express-flash';
 import passport from 'passport';
-import prisma from './prisma';
 import { initialize } from './passport-config';
 import apiV1 from './routes/api/v1';
-import { authRoleOrPerson } from './middleware/authPage';
-import { UserRole } from './enums/userRole';
-import cloudinary from 'cloudinary';
-const SibApiV3Sdk = require('sib-api-v3-typescript');
-const bcrypt = require('bcrypt');
-const cookieParser = require("cookie-parser");
-import {createServer} from "http";
 import {Server} from "socket.io";
+
 import {authSocket} from "./middleware/authSocket";
-const sender = {
-    email: 'wu.pwdreset@gmail.com',
-    name: 'Wirtualna uczelnia',
-}
+import {connectionController} from "./controllers/socket/connectionController";
+import {chatroomController} from "./controllers/socket/chatroomController";
+import {passwordController} from "./controllers/passwordController";
+import {loginController} from "./controllers/loginController";
+import {checkAuthController} from "./controllers/checkAuthController";
+import {messageController} from "./controllers/socket/messageController";
 
-const unixTimestamp = Math.round(new Date().getTime() / 1000);
-const timestamp_pg = new Date(new Date().toISOString().slice(0, 19).replace('T', ' ') + '.000000')
-
+const SibApiV3Sdk = require('sib-api-v3-typescript');
+const cookieParser = require("cookie-parser");
 require('dotenv').config();
 const app = express();
 const server = require('http').createServer(app);
+
 
 const io = new Server(server,{
     cors:{
@@ -46,6 +38,11 @@ const io = new Server(server,{
 })
 
 app.use(cookieParser());
+
+const sender = {
+    email: 'wu.pwdreset@gmail.com',
+    name: 'Wirtualna uczelnia',
+}
 let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 let apiKey = apiInstance.authentications['apiKey'];
 apiKey.apiKey = process.env.SENDINBLUE_API!;
@@ -113,144 +110,19 @@ app.get('/api/v1/', (req, res, next) => {
     res.status(200).send("OK");
 });
 app.post('/api/v1/login', (req, res, next) => {
-    passport.authenticate('local', (err: any, user: Express.User, info: { message: any; }) => {
-        if (err) {
-            return next(err);
-        }
-        if (!user) res.status(401).send(info.message);
-        else {
-            req.logIn(user, async (err) => {
-                if (err) throw err;
-
-                const findPersonById = await prisma.person.findFirst({
-                    where: {
-                        id: req.user?.person_id
-                    }
-                });
-
-                await prisma.account.update({
-                    where: {
-                        person_id: req.user?.person_id
-                    },
-                    data: {
-                        last_login: timestamp_pg
-                    }
-                });
-                // req.session.cookie.maxAge = hour*2;
-                // console.log(req.session.cookie);
-                res.status(200).send(findPersonById);
-            });
-        }
-    })(req, res, next);
+    loginController().login(req, res, next, passport);
 });
 app.get('/api/v1/check-auth', async (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    if (!req.user) {
-        res.status(401).send({
-            role: null,
-            auth: false
-        });
-    } else {
-        const findUserRole = await prisma.person.findFirst({
-            where: {
-                id: req.user.person_id
-            }
-        });
-        res.status(200).send(
-            {
-                role: findUserRole?.role,
-                auth: true
-            }
-        );
-    }
-});
-app.get('/api/v1/cloud-signature', authRoleOrPerson([UserRole.ADMIN, UserRole.STUDENT, UserRole.TEACHER]), (req, res, next) => {
-    // @ts-ignore there are no types avaliable for cloudinary library and im too lazy to write them
-    const signature = cloudinary.utils.api_sign_request({
-        timestamp: unixTimestamp
-    }, process.env.CLOUDINARY_SECRET!);
-    res.status(200).send({
-        signature: signature,
-        timestamp: unixTimestamp
-    });
-
+    await checkAuthController().checkAuth(req, res);
 });
 app.delete('/api/v1/logout', (req, res, next) => {
-    req.logout(function (err) {
-        if (err) {
-            return next(err);
-        }
-        res.status(200).json({ message: 'Logged out' });
-    });
+    loginController().logout(req, res, next);
 });
 app.post('/api/v1/forgot-password', async (req, res, next) => {
-    const { email } = req.body;
-    const findPersonByEmail = await prisma.person.findFirst({
-        where: {
-            contact: {
-                email: email
-            }
-        }
-    });
-    if (!findPersonByEmail) {
-        res.status(404).send({ message: 'User not found' });
-    } else {
-        const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        await prisma.account.update({
-            where: {
-                person_id: findPersonByEmail.id
-            },
-            data: {
-                reset_token: token,
-                reset_token_expires: new Date(new Date(new Date().getTime() + 15 * 60000).toISOString().slice(0, 19).replace('T', ' ') + '.000000')
-            }
-        })
-        apiInstance.sendTransacEmail({
-            sender: sender,
-            to: [{ email: email }],
-            templateId: 1,
-            params: {
-                reset_token: token
-            }
-        }).then((data:any) => {
-            res.status(200).send({ message: 'email sent' });
-        }).catch((error:any) => {
-            res.status(500).send({ message: 'Internal server error' });
-        });
-    }
+    await passwordController().forgotPassword(req, res, apiInstance, sender);
 });
 app.post('/api/v1/reset-password', async (req, res, next) => {
-    const { token, password } = req.body;
-    if (!token || !password) {
-        res.status(400).send({ message: 'Bad request' })
-    } else {
-        const findPersonByToken = await prisma.account.findFirst({
-            where: {
-                reset_token: token
-            }
-        });
-        if (!findPersonByToken) {
-            res.status(404).send({ message: 'User not found' });
-        } else {
-
-            if (timestamp_pg.getTime() > findPersonByToken.reset_token_expires!.getTime()) {
-                res.status(400).send({ message: 'Token expired' });
-            } else {
-                await prisma.account.update({
-                    where: {
-                        person_id: findPersonByToken.person_id
-                    },
-                    data: {
-                        password: await bcrypt.hash(password, 10),
-                        reset_token: null,
-                        reset_token_expires: null,
-                    }
-                });
-                res.status(200).send({ message: 'Password changed' });
-            }
-        }
-    }
-
+    await passwordController().resetPassword(req, res);
 });
 
 io.use(wrap(sessionMiddleware));
@@ -258,422 +130,38 @@ io.use(authSocket);
 io.on("reconnect_attempt", () => {
     console.log('reconnect_attempt');
 });
-
 io.on("connect", async (socket) => {
     console.log('connected client: ', socket.data.user);
+
     socket.join(socket.data.user);
-    const chatrooms = await prisma.chatroom.findMany({
-        where: {
-            chatroom_user: {
-                some: {
-                    user_id: socket.data.user,
-                    joined_at: {
-                        not: null
-                    },
-                    left_at: null,
-                },
-            },
-        },
-        include: {
-            chatroom_user: {
-                where: {
-                    user_id: {
-                        not: socket.data.user
-                    }
-                },
-                include: {
-                    account:{
-                        select: {
-                            account_images: {
-                                select: {
-                                    avatar_url: true
-                                }
-                            },
-                            person:{
-                                select:{
-                                    first_name: true,
-                                    last_name: true
-                                }
-                            }
-                        }
-                    },
-                },
 
-            },
-            message:{
-                orderBy: {
-                    sent_at: 'desc'
-                },
-                take: 20,
-                //TODO: on scroll up, fetch more messages
-            }
-        }
-    })
-    if(chatrooms.length > 0){
-        chatrooms.forEach((chatroom) => {
-                socket.emit("chatrooms",chatrooms);
-                socket.join(chatroom.id as unknown as string);
-                console.log(`User ${socket.data.user} joined chatroom ${chatroom.id}`);
-        })
-        const unreadMessages = await prisma.chatroom_user.findMany({
-            where: {
-                chatroom_id: {
-                    in: chatrooms.map((chatroom) => chatroom.id)
-                },
-                user_id: socket.data.user,
-            },
-            select: {
-                chatroom_id: true,
-                unread_count: true,
-            }
-        });
-
-        socket.emit("unread-messages", unreadMessages);
-    }
-
-    socket.on("join-chatroom", async (chatroomId) => {
-        socket.join(chatroomId as string);
-        const chatroom = await prisma.chatroom.findFirst({
-            where: {
-                id: chatroomId
-            },
-            include: {
-                chatroom_user: {
-                    where: {
-                        user_id: {
-                            not: socket.data.user
-                        }
-                    },
-                    include: {
-                        account:{
-                            select: {
-                                account_images: {
-                                    select: {
-                                        avatar_url: true
-                                    }
-                                },
-                                person:{
-                                    select:{
-                                        first_name: true,
-                                        last_name: true
-                                    }
-                                }
-                            }
-                        },
-                    },
-
-                },
-                message:{
-                    orderBy: {
-                        sent_at: 'desc'
-                    }
-                }
-            }
-        });
-        console.log('updating messages from within join-chatroom event');
-        console.log(`User ${socket.data.user} joined chatroom ${chatroomId} using join-chatroom`);
-        socket.emit("join-chatroom",chatroom);
-    })
-    socket.on("seen-messages", async (chatroom) => {
-
-        let updatedMessages = await prisma.message.updateMany({
-            where: {
-                chatroom_id: chatroom.id,
-                sender_id: {
-                    not: socket.data.user
-                },
-                status: 'sent'
-            },
-            data: {
-                status: 'read'
-            }
-        })
-        const updatedChatroom = await prisma.chatroom.findFirst({
-            where: {
-                id: chatroom.id
-            },
-            include: {
-                chatroom_user: {
-                    where: {
-                        user_id: {
-                            not: socket.data.user
-                        },
-                        left_at: null
-                    },
-                    include: {
-                        account:{
-                            select: {
-                                account_images: {
-                                    select: {
-                                        avatar_url: true
-                                    }
-                                },
-                                person:{
-                                    select:{
-                                        first_name: true,
-                                        last_name: true
-                                    }
-                                }
-                            }
-                        },
-                    },
-
-                },
-                //if the user left the chat at some point, but then rejoined, show messages from when they left
-                message:{
-                    orderBy: {
-                        sent_at: 'desc'
-                    }
-                }
-            }
-        });
-
-        if(updatedChatroom){
-            let updatedChatroomUser = await prisma.chatroom_user.update({
-                where: {
-                    user_id_chatroom_id:{
-                        user_id: socket.data.user,
-                        chatroom_id: chatroom.id
-                    }
-                },
-                data: {
-                    unread_count: 0
-                }
-            });
-        }
-
-        const unreadMessages = await prisma.chatroom_user.findMany({
-            where: {
-                chatroom_id: {
-                    in: chatrooms.map((chatroom) => chatroom.id)
-                },
-
-                user_id: socket.data.user
-
-            },
-            select: {
-                chatroom_id: true,
-                unread_count: true,
-            }
-        });
-
-        socket.to(chatroom.id as unknown as string).emit("seen-messages",updatedChatroom);
-        //send event to trigger update of unread count
-        socket.emit("unread-messages", unreadMessages);
-    });
+    const chatrooms = await connectionController().onConnection(socket);
 
     socket.on("create-chatroom", async (chatroom) => {
-        //check if chatroom exists:
-        const existingChatroom = await prisma.chatroom.findFirst({
-            where: {
-                chatroom_user: {
-                    every: {
-                        user_id: {
-                            in: [chatroom.created_by, chatroom.recipient]
-                        }
-                    }
-                }
-            },
-            include:{
-                message: {
-                    take: 1,
-                    orderBy: {
-                        sent_at: "desc"
-                    }
-                },
-
-                chatroom_user: {
-                    where: {
-                        user_id: {
-                            not: socket.data.user
-                        }
-                    },
-                    include: {
-                        account: {
-                            select: {
-                                account_images: {
-                                    select: {
-                                        avatar_url: true
-                                    }
-                                },
-                                person:{
-                                    select:{
-                                        first_name: true,
-                                        last_name: true
-                                    }
-                                }
-                            },
-                        },
-                    }
-                }
-            }
-        });
-        if(existingChatroom){
-            socket.join(existingChatroom.id as unknown as string);
-            socket.emit("create-chatroom",existingChatroom);
-            console.log(`Chatroom ${existingChatroom.id} already exists, joining it instead`);
-            return;
-        }
-
-        let createdChatroom = await prisma.chatroom.create({
-            data: {
-                created_by: chatroom.created_by,
-                created_at: chatroom.created_at,
-                last_activity: chatroom.last_activity
-            }
-        })
-
-        let usersInChatroom = await prisma.chatroom_user.createMany({
-            data: [
-                {
-                    chatroom_id: createdChatroom.id,
-                    user_id: chatroom.created_by,
-                    joined_at: chatroom.created_at
-                },
-                {
-                    chatroom_id: createdChatroom.id,
-                    user_id: chatroom.recipient,
-                    // joined_at: chatroom.created_at
-                }
-            ]
-        })
-
-        let newChatroom = await prisma.chatroom.findFirst({
-            where: {
-                id: createdChatroom.id
-            },
-            include:{
-                message: {
-                    take: 1,
-                    orderBy: {
-                        sent_at: "desc"
-                    }
-                },
-
-                chatroom_user: {
-                    where: {
-                        user_id: {
-                            not: socket.data.user
-                        }
-                    },
-                    include: {
-                        account: {
-                            select: {
-                                account_images: {
-                                    select: {
-                                        avatar_url: true
-                                    }
-                                },
-                                person:{
-                                    select:{
-                                        first_name: true,
-                                        last_name: true
-                                    }
-                                }
-                            },
-                        },
-                    }
-                }
-            }
-        })
-
-        socket.join(newChatroom!.id as unknown as string);
-        console.log(`User ${socket.data.user} joined chatroom ${newChatroom!.id}`);
-        socket.emit("create-chatroom", newChatroom);
-
+        await chatroomController().createChatroom(socket, chatroom);
+    });
+    socket.on("join-chatroom", async (chatroomId) => {
+        await chatroomController().joinChatroom(socket, chatroomId);
     })
-
+    socket.on("delete-chatroom", async (chatroomId) => {
+        await chatroomController().deleteChatroom(socket, chatroomId);
+    });
     socket.on("send-message", async (message) => {
-        let createdMessage = await prisma.message.create({
-            data: {
-                chatroom_id: message.chatroom_id,
-                sender_id: message.sender_id,
-                sent_at: message.sent_at,
-                content: message.content,
-                status: 'sent',
-            }
-        });
-        let recipient = await prisma.chatroom_user.findFirst({
-            where: {
-                chatroom_id: message.chatroom_id,
-                user_id: {
-                    not: message.sender_id
-                }
-            }
+        await messageController().sendMessage(socket, message).then((createdMessage)=>{
+            io.in(message.chatroom_id).emit("send-message",createdMessage);
         })
-        //whenever a new message is sent, update last_activity of chatroom
-        let updatedChatroom = await prisma.chatroom.update({
-            where: {
-                id: message.chatroom_id
-            },
-            data: {
-                last_activity: message.sent_at,
-            }
-        });
-        let updatedChatroomUser = await prisma.chatroom_user.update({
-            where: {
-                user_id_chatroom_id: {
-                    user_id: recipient!.user_id!,
-                    chatroom_id: message.chatroom_id
-                }
-            },
-            data:{
-                unread_count: {
-                    increment: 1
-                },
-                joined_at: message.sent_at,
-                left_at: null
-            }
-        });
-
-        const unreadMessages = await prisma.chatroom_user.findMany({
-            where: {
-                chatroom_id: message.chatroom_id,
-                user_id: recipient!.user_id!
-            },
-            select: {
-                chatroom_id: true,
-                unread_count: true,
-            }
-        });
-        console.log(unreadMessages)
-        console.log(`User ${socket.data.user} sent a message in chatroom ${message.chatroom_id}`);
-        socket.to(recipient!.user_id! as any as string).emit("new-message",message.chatroom_id);
-        socket.to(recipient!.user_id! as any as string).emit("unread-messages",unreadMessages);
-        io.in(message.chatroom_id).emit("send-message",createdMessage);
+    });
+    socket.on("seen-messages", async (chatroom) => {
+        await messageController().seenMessages(socket, chatroom, chatrooms);
     });
     socket.on("user-typing",({chatroomId, senderId, isTyping})=>{
-        console.log(`User ${senderId} is typing in chatroom ${chatroomId}? ${isTyping}`);
         socket.to(chatroomId).emit("user-typing",{chatroomId, senderId, isTyping});
     })
-
-    //this event
-    socket.on("delete-chatroom", async (chatroomId) => {
-        socket.leave(chatroomId as unknown as string);
-        //update chatroom_user table, set left_at to current time
-        let updatedChatroomUser = await prisma.chatroom_user.update({
-            where: {
-                user_id_chatroom_id: {
-                    user_id: socket.data.user,
-                    chatroom_id: chatroomId
-                },
-            },
-            data: {
-                joined_at: null,
-                left_at: new Date()
-            }
-        });
-        //force update front end to remove chatroom from list
-        socket.emit("delete-chatroom", chatroomId);
-    });
-
     socket.on("disconnect", () => {
         console.log(`User ${socket.data.user} disconnected`);
     });
 })
-
 server.listen(3000,()=>{
     console.log("Server started on port 3000");
 })
 export default app;
-
