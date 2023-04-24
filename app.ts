@@ -5,7 +5,7 @@ interface BigIntWithToJSON extends BigInt {
 (BigInt.prototype as BigIntWithToJSON).toJSON = function () {
     return this.toString();
 };
-import {sessionMiddleware,wrap} from "./sessionController";
+import {sessionMiddleware,wrap} from "./controllers/sessionController";
 import express from 'express';
 import cors from 'cors';
 import flash from 'express-flash';
@@ -132,7 +132,6 @@ io.on("reconnect_attempt", () => {
 });
 io.on("connect", async (socket) => {
     console.log('connected client: ', socket.data.user);
-
     socket.join(socket.data.user);
 
     const chatrooms = await connectionController().onConnection(socket);
