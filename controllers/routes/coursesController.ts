@@ -7,7 +7,6 @@ export const coursesController = () =>{
             const result = await prisma.course.findMany({
                 include: {
                     person: true,
-                    // @ts-ignore prisma does not recognize this for some reason ¯\_(ツ)_/¯
                     department_course: true
                 }
             });
