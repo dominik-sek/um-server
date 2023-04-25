@@ -3,9 +3,7 @@ import {createClient} from "redis";
 import RedisStore from "connect-redis";
 require('dotenv').config();
 
-let redisClient = createClient({
-    url: process.env.REDIS_URL_EXTERNAL,
-})
+let redisClient = createClient({})
 redisClient.connect().catch(console.error)
 let redisStore = new RedisStore({
     client: redisClient,
