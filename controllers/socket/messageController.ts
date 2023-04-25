@@ -146,6 +146,7 @@ export const messageController = () =>{
         //send event to trigger update of unread count
         socket.emit("unread-messages", unreadMessages);
     }
+
     return {
         sendMessage,
         seenMessages
