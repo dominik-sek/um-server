@@ -29,13 +29,7 @@ const app = express();
 const server = require('http').createServer(app);
 
 
-const io = new Server(server,{
-    cors:{
-        origin:'http://localhost:5173',
-        methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD", "DELETE"],
-        credentials: true
-    }
-})
+const io = new Server(server)
 
 app.use(cookieParser());
 
@@ -48,61 +42,14 @@ let apiKey = apiInstance.authentications['apiKey'];
 apiKey.apiKey = process.env.SENDINBLUE_API!;
 
 app.use(express.json());
-
-app.use(cors({
-    origin:'http://localhost:5173',
-    methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD", "DELETE"],
-    credentials: true
-}));
-
-//prod:
-// app.use(cors({
-//     // origin:'https://um.dominiksek.com',
-//     origin:true,
-//     methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD", "DELETE"],
-//     credentials: true
-// }));
-
 app.use(flash());
-
 app.use(express.urlencoded({ extended: false }));
 app.set("trust proxy", 1);
-
-
 app.use(sessionMiddleware);
-
-//prod:
-// app.use(session({
-//     store: redisStore,
-//     proxy: true,
-//     secret: process.env.SESSION_SECRET!,
-//     resave: false,
-//     saveUninitialized: false,
-//     cookie: {
-//         maxAge: 900000, // 15 minutes
-//         sameSite: "none",
-//         secure: true,
-//         httpOnly:true,
-//         path: "/",
-//         domain: ".dominiksek.com"
-//     }
-// }));
 
 initialize(passport);
 app.use(passport.initialize());
 app.use(passport.session());
-
-
-// app.use((req, res, next) => {
-//     if (req.user) {
-//         req.session!.destroy((err) => {
-//             if (err) {
-//                 console.log(err);
-//             }
-//         });
-//     }
-//     next();
-// });
 
 
 app.use('/api/v1', apiV1);
